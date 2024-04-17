@@ -96,7 +96,16 @@ reduced_poststrat_data2 <- reduced_poststrat_data2 |>
 poststrat_popvote_data <- left_join(reduced_poststrat_data2, popvote2020, by = "state")
 
 poststrat_analysis_data <- poststrat_popvote_data |>
-  select(state, biden_won, biden_prop, region, age, sex, race, hispan, educ, urban)
+  select(state, 
+         biden_won, 
+         biden_prop, 
+         region, 
+         age, 
+         sex, 
+         race, 
+         hispanic, 
+         educ, 
+         urban)
 
 # Write post stratification data parquet into data/analysis_data
 # Add it to gitignore to prevent it from being shared on github
