@@ -1,27 +1,26 @@
 ---
-title: "Datasheet for 'A dataset'"
-subtitle: "My subtitle if needed"
+title: "Datasheet for the 'Comprehensive Election Study 2022'"
+subtitle: "The survey data set used for 'US Election Analysis'"
 author: 
-  - First author
-  - Another author
-thanks: "Code and data are available at: LINK."
-date: "`r Sys.time()`"
-date-format: "D MMMM YYYY"
-abstract: "First sentence. Second sentence. Third sentence. Fourth sentence."
+  - Talia Fabregas
+thanks: "Code and data are available at: https://github.com/taliafabs/us-election-analysis.git"
+date: today
+date-format: long
+abstract: ""
 format: pdf
 number-sections: true
 bibliography: references.bib
 ---
 
-Extract of the questions from @gebru2021datasheets.
+This data sheet was put together with the guidance of @gebru2021datasheets and the book "Telling Stories with Data" [@tswd].
 
 
 **Motivation**
 
 1. *For what purpose was the dataset created? Was there a specific task in mind? Was there a specific gap that needed to be filled? Please provide a description.*
-    - The dataset was created to enable analysis of Australian politicians. We were unable to find a publicly available dataset in a structured format that had the biographical and political information on Australian politicians that was needed for modelling.
+    - This dataset was created to 
 2. *Who created the dataset (for example, which team, research group) and on behalf of which entity (for example, company, institution, organization)?*
-    - TBD
+    - The 
 3. *Who funded the creation of the dataset? If there is an associated grant, please provide the name of the grantor and the grant name and number.*
     - TBD
 4. *Any other comments?*
@@ -34,38 +33,38 @@ Extract of the questions from @gebru2021datasheets.
 2. *How many instances are there in total (of each type, if appropriate)?*
 	- TBD
 3. *Does the dataset contain all possible instances or is it a sample (not necessarily random) of instances from a larger set? If the dataset is a sample, then what is the larger set? Is the sample representative of the larger set (for example, geographic coverage)? If so, please describe how this representativeness was validated/verified. If it is not representative of the larger set, please describe why not (for example, to cover a more diverse range of instances, because instances were withheld or unavailable).*
-	- TBD
+	- The CES 2022 dataset is designed to be representative of all US adults; not every survey response is included in the data set to make it representative [@survey].
 4. *What data does each instance consist of? "Raw" data (for example, unprocessed text or images) or features? In either case, please provide a description.*
-	- TBD
+	- Each instance consists of responses
 5. *Is there a label or target associated with each instance? If so, please provide a description.*
-	- TBD
+	- While there are questions about political preferences, there is no explicit label or target associated with each instance in the original data set. However, in the context of my US Election Analysis, I've created a vote_biden target binary variable which indicates whether each respondent will vote for Joe Biden (D) or Donald Trump (R) in November. The purpose of this target is to fit a logistic regression model to predict vote choice of US adults based on state, whether Biden previously won that state, age, race, sex, highest level of education, and whether the respondent lives in an urban or rural area.
 6. *Is any information missing from individual instances? If so, please provide a description, explaining why this information is missing (for example, because it was unavailable). This does not include intentionally removed information, but might include, for example, redacted text.*
-	- TBD
+	- No. As far as my research is concerned, I did not find any missing information in the data set.
 7. *Are relationships between individual instances made explicit (for example, users' movie ratings, social network links)? If so, please describe how these relationships are made explicit.*
-	- TBD
+	- Relationships between individual instances are not made explicit.
 8. *Are there recommended data splits (for example, training, development/validation, testing)? If so, please provide a description of these splits, explaining the rationale behind them.*
-	- TBD
+	- There are no recommended data splits provided. 
 9. *Are there any errors, sources of noise, or redundancies in the dataset? If so, please provide a description.*
-	- TBD
+	- There are no clear errors, sources of noise, or redundancies in the data set. There are, however, individuals whose political preference is not necessarily what the logistic regression model would predict using the state that they live in, their age, race, sex, and highest level of education.
 10. *Is the dataset self-contained, or does it link to or otherwise rely on external resources (for example, websites, tweets, other datasets)? If it links to or relies on external resources, a) are there guarantees that they will exist, and remain constant, over time; b) are there official archival versions of the complete dataset (that is, including the external resources as they existed at the time the dataset was created); c) are there any restrictions (for example, licenses, fees) associated with any of the external resources that might apply to a dataset consumer? Please provide descriptions of all external resources and any restrictions associated with them, as well as links or other access points, as appropriate.*
-	- TBD
+	- The data set is not self contained. 
 11. *Does the dataset contain data that might be considered confidential (for example, data that is protected by legal privilege or by doctor-patient confidentiality, data that includes the content of individuals' non-public communications)? If so, please provide a description.*
-	- TBD
+	- The data set does not contain data that might be considered confidential.
 12. *Does the dataset contain data that, if viewed directly, might be offensive, insulting, threatening, or might otherwise cause anxiety? If so, please describe why.*
-	- TBD
+	- Due to the current level of political polarization in America, data about individuals'
 13. *Does the dataset identify any sub-populations (for example, by age, gender)? If so, please describe how these subpopulations are identified and provide a description of their respective distributions within the dataset.*
-	- TBD
+	- The dataset does identify sub-populations. Information about individual instances including, but not limited to, age, race, sex, whether they identify as lgbtq+, marital status, income, zip code, region, and state of residence are included in this data set. The data set includes ...
 14. *Is it possible to identify individuals (that is, one or more natural persons), either directly or indirectly (that is, in combination with other data) from the dataset? If so, please describe how.*
-	- TBD
+	- It is not possible to identify individuals directly or indirectly from the data set. While information about state, region, city, race, age, gender, marital status, religious beliefs, political preferences, etc. is present in this dataset, it is very hard to connect these traits back to a particular individual. 
 15. *Does the dataset contain data that might be considered sensitive in any way (for example, data that reveals race or ethnic origins, sexual orientations, religious beliefs, political opinions or union memberships, or locations; financial or health data; biometric or genetic data; forms of government identification, such as social security numbers; criminal history)? If so, please provide a description.*
-	- TBD
+	- Yes. This data set reveals sensitive data, such as the race, ethnic origins, sexual orientation, religious beliefs, political preferences, marital status, and income data, of individual instances. However, it is not done so in an identifiable manner. These are simply variables in a large survey data set that simply describe the individual, without identifying them in any way, shape, or form.
 16. *Any other comments?*
-	- TBD
+	- No further comments
 
 **Collection process**
 
 1. *How was the data associated with each instance acquired? Was the data directly observable (for example, raw text, movie ratings), reported by subjects (for example, survey responses), or indirectly inferred/derived from other data (for example, part-of-speech tags, model-based guesses for age or language)? If the data was reported by subjects or indirectly inferred/derived from other data, was the data validated/verified? If so, please describe how.*
-	- TBD
+	- The data is mainly recruited from CCES respondents who are YouGov panelists that sing up for notifications about new surveys, however some respondents are recruited from online advertisements or outside survey providers [@survey].
 2. *What mechanisms or procedures were used to collect the data (for example, hardware apparatuses or sensors, manual human curation, software programs, software APIs)? How were these mechanisms or procedures validated?*
 	- TBD
 3. *If the dataset is a sample from a larger set, what was the sampling strategy (for example, deterministic, probabilistic with specific sampling probabilities)?*

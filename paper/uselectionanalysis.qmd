@@ -1,10 +1,9 @@
 ---
-title: "My title"
+title: "Forecasting the 2024 U.S. Presidential Election"
 subtitle: "My subtitle if needed"
 author: 
-  - First author
-  - Another author
-thanks: "Code and data are available at: LINK."
+  - Talia Fabregas
+thanks: "Code and data are available at: https://github.com/taliafabs/us-election-analysis.git"
 date: today
 date-format: long
 abstract: "First sentence. Second sentence. Third sentence. Fourth sentence."
@@ -17,9 +16,31 @@ bibliography: references.bib
 #| include: false
 #| warning: false
 #| message: false
+#| eval: true
 
 library(tidyverse)
-library(palmerpenguins)
+library(janitor)
+library(rstanarm)
+library(readr)
+library(ggplot2)
+library(knitr)
+library(arrow)
+library(kableExtra)
+library(modelsummary)
+library(MASS)
+library(broom.mixed)
+library(gutenbergr)
+library(haven)
+library(labelled)
+library(tidybayes)
+library(tidyverse)
+
+## load data
+# change file path to the location of cleaned survey and poststrat data on local computer
+survey_analysis_data <- arrow::read_parquet("/Users/talia/us-election-analysis/data/analysis_data/survey_analysis_data.parquet")
+survey_analysis_subset <- arrow:read_parquet("/Users/talia/us-election-analysis/data/analysis_data/survey_analysis_subset.parquet")
+
+poststrat_analysis_data <- arrow::read_parquet("/Users/talia/us-election-analysis/data/analysis_data/poststrat_analysis_data.parquet")
 ```
 
 
@@ -27,50 +48,38 @@ library(palmerpenguins)
 
 You can and should cross-reference sections and sub-sections. We use @citeR and @rohan.
 
-The remainder of this paper is structured as follows. @sec-data....
-
-
+The 2024 U.S. Presidential election will take place on Tuesday, November 5th. Amidst unprecedented levels of political polarization, American voters are set to see a remat
 
 # Data {#sec-data}
 
-Some of our data is of penguins (@fig-bills), from @palmerpenguins.
-
+## Survey Data {#sec=survey}
 ```{r}
-#| label: fig-bills
-#| fig-cap: Bills of penguins
-#| echo: false
-
-ggplot(penguins, aes(x = island, fill = species)) +
-  geom_bar(alpha = 0.8) +
-  scale_fill_manual(values = c("darkorange","purple","cyan4"),
-                    guide = "none") +
-  theme_minimal() +
-  facet_wrap(~species, ncol = 1) +
-  coord_flip()
-```
-
-Talk more about it.
-
-And also planes (@fig-planes). (You can change the height and width, but don't worry about doing that until you have finished every other aspect of the paper - Quarto will try to make it look nice and the defaults usually work well once you have enough text.)
-
-```{r}
-#| label: fig-planes
-#| fig-cap: Relationship between wing length and width
 #| echo: false
 #| warning: false
 #| message: false
+#| eval: true
+#| label: fig-surveyrace
+#| fig-cap: Preferred presidential candidates of survey respondents, by gender and race
 
-analysis_data <- read_csv(here::here("data/analysis_data/analysis_data.csv"))
+survey_analysis_subset$vote24 <- ifelse(survey_analysis_subset[,1] == 1, "Joe Biden", "Donald Trump")
 
-analysis_data |> 
-  ggplot(aes(x = width, y = length)) +
-  geom_point(alpha = 0.8) +
+survey_analysis_subset |>
+  ggplot(aes(x = race, fill = vote24)) +
+  stat_count(position = "dodge") +
+  facet_wrap(facets = vars(sex)) +
   theme_minimal() +
-  labs(x = "Wing width (mm)",
-       y = "Wing length (mm)")
+  labs(
+    x = "Race",
+    y = "Number of respondents",
+    fill = "Preferred Presidential Candidate"
+  ) +
+  coord_flip() +
+  scale_fill_brewer(palette = "Set1") +
+  theme(legend.position = "bottom")
 ```
 
-Talk way more about it. 
+
+## Post Stratification Data {#sec-poststrat}
 
 
 
@@ -82,7 +91,6 @@ Here we briefly describe the Bayesian analysis model used to investigate... Back
 
 ## Model set-up
 
-Define $y_i$ as the number of seconds that the plane remained aloft. Then $\beta_i$ is the wing width and $\gamma_i$ is the wing length, both measured in millimeters.  
 
 \begin{align} 
 y_i|\mu_i, \sigma &\sim \mbox{Normal}(\mu_i, \sigma) \\
@@ -98,47 +106,143 @@ We run the model in R [@citeR] using the `rstanarm` package of @rstanarm. We use
 
 ### Model justification
 
-We expect a positive relationship between the size of the wings and time spent aloft. In particular...
-
-We can use maths by including latex between dollar signs, for instance $\theta$.
-
-
-# Results
-
-Our results are summarized in @tbl-modelresults.
-
 ```{r}
 #| echo: false
 #| eval: true
 #| warning: false
 #| message: false
 
-library(rstanarm)
+# use this model to predict the following:
+# overall support for biden
+# support by state for biden
+# electoral college map
 
-first_model <-
-  readRDS(file = here::here("models/first_model.rds"))
+# load the model with readRDS
+us_election_model <-
+  readRDS(file = here::here("models/us_election_model.rds"))
 ```
+
+
+# Results {#sec-results}
+
+## Popular Vote Prediction
 
 ```{r}
 #| echo: false
-#| eval: true
-#| label: tbl-modelresults
-#| tbl-cap: "Explanatory models of flight time based on wing width and wing length"
 #| warning: false
+#| message: false
+#| eval: true
+#| include: true
+#| label: tbl-popvotepost-popularvote
+#| tbl-cap: "2024 U.S. election result estimates for Joe Biden based on post-stratification"
+#| tbl-subcap: ["Popular Vote", "Electoral College"]
 
-modelsummary::modelsummary(
-  list(
-    "First model" = first_model
-  ),
-  statistic = "mad",
-  fmt = 2
-)
+props <- poststrat_analysis_data %>%
+  group_by(state, biden_won, race, hispanic, age_bracket, sex, educ, urban) %>%
+  summarise(n = n()) %>%
+  ungroup() %>%
+  group_by(state) %>%
+  mutate(prop = n / sum(n))
+
+num_per_state <- poststrat_analysis_data %>%
+  group_by(state) %>%
+  summarise(total_respondents = n())
+# 
+biden_support_by_state <- us_election_model %>%
+  add_epred_draws(newdata = props) %>%
+  rename(support_biden_predict = .epred) %>%
+  mutate(support_biden_predict_prop = support_biden_predict * prop) %>%
+  group_by(state, .draw) %>%
+  summarise(support_biden_predict = sum(support_biden_predict_prop)) %>%
+  group_by(state) %>%
+  summarise(
+    mean = mean(support_biden_predict),
+    lower = quantile(support_biden_predict, 0.025),
+    upper = quantile(support_biden_predict, 0.975)
+  )
+# 
+# 
+# merged_states <- merge(num_per_state, biden_support_by_state, by="state")
+# 
+# merged_states$mean_weighted_sum <- merged_states$total_respondents * merged_states$mean
+# merged_states$lower_weighted_sum <- merged_states$total_respondents * merged_states$lower
+# merged_states$upper_weighted_sum <- merged_states$total_respondents * merged_states$upper
+# 
+# 
+# biden_mean <- sum(merged_states$mean_weighted_sum) / sum(merged_states$total_respondents)
+# biden_lower <- sum(merged_states$lower_weighted_sum) / sum(merged_states$total_respondents)
+# biden_upper <- sum(merged_states$upper_weighted_sum) / sum(merged_states$total_respondents)
+# 
+# biden_popvote <- tibble(
+#   "Estimate:" = c("Lower Estimate", "Mean Estimate", "Upper Estimate"),
+#   "Biden %" = c(round(biden_lower * 100, 2), 
+#                 round(biden_mean * 100, 2), 
+#                 round(biden_upper * 100, 2)),
+#   "Trump %" = c(round((1 - biden_lower) * 100, 2), 
+#                 round((1 - biden_mean) * 100, 2), 
+#                 round((1 - biden_upper) * 100, 2))
+# )
+# 
+# # Set row names
+# rownames(biden_popvote) <- NULL
+# 
+# # electoral college
+# # had chatgpt make me an electoral college csv
+# electoral_college <- read_csv("electoral_college_votes.csv", show_col_types = FALSE)
+# 
+# 
+# electoral_college$electoral_votes <- as.numeric(electoral_college$electoral_votes)
+# 
+# merged_ec <- merge(biden_support_by_state, electoral_college, by = "state")
+# 
+# biden_states_mean <- merged_ec |>
+#   filter(mean >= 0.5)
+# 
+# trump_states_mean <- merged_ec |>
+#   filter(mean < 0.5)
+# 
+# biden_ec_mean <- sum(biden_states_mean$electoral_votes)
+# trump_ec_mean <- sum(trump_states_mean$electoral_votes)
+# 
+# biden_states_lower <- merged_ec |>
+#   filter(lower >= 0.5)
+# trump_states_lower <- merged_ec |>
+#   filter(lower < 0.5)
+# 
+# biden_ec_lower <- sum(biden_states_lower$electoral_votes)
+# 
+# biden_states_upper <- merged_ec |>
+#   filter(upper >= 0.5)
+# 
+# biden_ec_upper <- sum(biden_states_upper$electoral_votes)
+# 
+# 
+# biden_ec_poststrat <- tibble(
+#   "Electoral College Estimate:" = c("Lower Estimate", "Mean Estimate", "Upper Estimate"),
+#   "Biden" = c(biden_ec_lower, biden_ec_mean, biden_ec_upper),
+#   "Trump" = c(538-biden_ec_lower, 538-biden_ec_mean, 538-biden_ec_upper)
+# )
+# 
+# # Set row names
+# rownames(biden_ec_poststrat) <- NULL
+# 
+# # popular vote table
+# kable(biden_popvote, align = "c") %>%
+#   kable_styling(bootstrap_options = "striped", full_width = F)
+# 
+# # electoral college table
+# kable(biden_ec_poststrat, align = "c") %>%
+#   kable_styling(bootstrap_options = "striped", full_width = F)
 ```
 
+## Electoral College Prediction
 
 
 
-# Discussion
+
+
+
+# Discussion {#sec-discussion}
 
 ## First discussion point {#sec-first-point}
 
@@ -148,9 +252,15 @@ If my paper were 10 pages, then should be be at least 2.5 pages. The discussion 
 
 ## Third discussion point
 
-## Weaknesses and next steps
+## Weaknesses and Limitations
 
-Weaknesses and next steps should also be included.
+## Next Steps
+Python, more recent data set, softmax regression, gradient descent
+Split the survey data into training, validation, and test
+Use gradient descent to find the optimal weights to maximize validation accuracy
+Apply the model to the post-stratification data
+Softmax regression does risk overfitting
+
 
 \newpage
 
@@ -165,52 +275,9 @@ Weaknesses and next steps should also be included.
 
 ## Posterior predictive check
 
-In @fig-ppcheckandposteriorvsprior-1 we implement a posterior predictive check. This shows...
 
-In @fig-ppcheckandposteriorvsprior-2 we compare the posterior with the prior. This shows... 
-
-```{r}
-#| eval: true
-#| echo: false
-#| message: false
-#| warning: false
-#| label: fig-ppcheckandposteriorvsprior
-#| layout-ncol: 2
-#| fig-cap: "Examining how the model fits, and is affected by, the data"
-#| fig-subcap: ["Posterior prediction check", "Comparing the posterior with the prior"]
-
-pp_check(first_model) +
-  theme_classic() +
-  theme(legend.position = "bottom")
-
-posterior_vs_prior(first_model) +
-  theme_minimal() +
-  scale_color_brewer(palette = "Set1") +
-  theme(legend.position = "bottom") +
-  coord_flip()
-```
 
 ## Diagnostics
-
-@fig-stanareyouokay-1 is a trace plot. It shows... This suggests...
-
-@fig-stanareyouokay-2 is a Rhat plot. It shows... This suggests...
-
-```{r}
-#| echo: false
-#| eval: true
-#| message: false
-#| warning: false
-#| label: fig-stanareyouokay
-#| fig-cap: "Checking the convergence of the MCMC algorithm"
-#| fig-subcap: ["Trace plot", "Rhat plot"]
-#| layout-ncol: 2
-
-plot(first_model, "trace")
-
-plot(first_model, "rhat")
-```
-
 
 
 \newpage

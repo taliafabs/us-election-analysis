@@ -17,19 +17,20 @@ library(haven)
 #### Clean data ####
 
 # Read in the raw post stratification data
-raw_poststrat_data <- read_dta("data/raw_data/usa_00005.dta")
+raw_poststrat_data <- read_dta("data/raw_data/usa_00001.dta")
 raw_poststrat_data <- labelled::to_factor(raw_poststrat_data)
 
 popvote2020 <- read_csv("/Users/talia/us-election-analysis/data/analysis_data/popvote_analysis_data.csv")
 
 # Select relevant variables
 reduced_poststrat_data1 <- raw_poststrat_data |> 
-  filter(stateicp != "state not identified")
+  filter(stateicp != "state not identified") |>
+  filter(!is.na(age))
 
 reduced_poststrat_data1 <- raw_poststrat_data |>
   select(
     stateicp,
-    region,
+    age,
     birthyr,
     sex,
     race,
@@ -73,21 +74,17 @@ reduced_poststrat_data2 <- reduced_poststrat_data1 |>
                          hispan == "puerto rican" ~ "hispanic",
                          hispan == "cuban" ~ "hispanic",
                          hispan == "other" ~ "hispanic",
-                         hispan == "not reported" ~ NA)
+                         hispan == "not reported" ~ "not hispanic"),
+    # age_bracket = case_when(age < 30 ~ "18-29",
+    #                         age < 45 ~ "30-44",
+    #                         age < 60 ~ "45-59",
+    #                         age >= 60 ~ "60+")
   )
 
-# Convert variables into factors
-reduced_poststrat_data2$race <- as.factor(reduced_poststrat_data2$race)
-reduced_poststrat_data2$educ <- as.factor(reduced_poststrat_data2$educ)
-reduced_poststrat_data2$urban <- as.factor(reduced_poststrat_data2$urban)
-reduced_poststrat_data2$sex <- as.factor(reduced_poststrat_data2$sex)
-reduced_poststrat_data2$state <- as.factor(reduced_poststrat_data2$state)
-reduced_poststrat_data2$region <- as.factor(reduced_poststrat_data2$region)
-reduced_poststrat_data2$hispanic <- as.factor(reduced_poststrat_data2$hispanic)
 
 # Remove all NA's
 reduced_poststrat_data2 <- reduced_poststrat_data2 |>
-  filter(!is.na(state) & !is.na(region) & !is.na(age) & !is.na(sex) & !is.na(race)
+  filter(!is.na(state) & !is.na(age) & !is.na(sex) & !is.na(race)
          & !is.na(hispan) & !is.na(educ) & !is.na(urban))
 
 # Left-join the reduced post-stratification data with the popular vote data
@@ -99,13 +96,29 @@ poststrat_analysis_data <- poststrat_popvote_data |>
   select(state, 
          biden_won, 
          biden_prop, 
-         region, 
-         age, 
+         age,
          sex, 
          race, 
          hispanic, 
          educ, 
          urban)
+
+poststrat_analysis_data <- poststrat_analysis_data |>
+  mutate(
+    age_bracket = case_when(age < 30 ~ "18-29",
+                            age < 45 ~ "30-44",
+                            age < 60 ~ "45-59",
+                            age >= 60 ~ "60+")
+  )
+
+poststrat_analysis_data$race <- as.factor(poststrat_analysis_data$race)
+poststrat_analysis_data$educ <- as.factor(poststrat_analysis_data$educ)
+poststrat_analysis_data$urban <- as.factor(poststrat_analysis_data$urban)
+poststrat_analysis_data$sex <- as.factor(poststrat_analysis_data$sex)
+poststrat_analysis_data$age_bracket <- as.factor(poststrat_analysis_data$age_bracket)
+poststrat_analysis_data$state <- as.factor(poststrat_analysis_data$state)
+poststrat_analysis_data$hispanic <- as.factor(poststrat_analysis_data$hispanic)
+poststrat_analysis_data$age_bracket <- as.factor(poststrat_analysis_data$age_bracket)
 
 # Write post stratification data parquet into data/analysis_data
 # Add it to gitignore to prevent it from being shared on github
