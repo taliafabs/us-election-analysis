@@ -16,22 +16,19 @@ library(rstanarm)
 library(arrow)
 
 #### Read data ####
-# survey_analysis_data <- read_parquet("data/analysis_data/survey_analysis_data.parquet")
-# 
-# # Subset it to 10,000 observations
-# # might want to move some of this code to the survey data cleaning script
 
+# use a 10,000 observation subset of the survey data
 survey_analysis_subset <- read_parquet("data/analysis_data/survey_analysis_subset.parquet")
 
 
 # set seed for reproducibility
 set.seed(116)
 
-### Model data ####
+### Model ####
 
 # This was fit using only a subset of the survey data because my computer cannot
 # handle a dataset with 50,000 observations and it took far too long to fit
-# Use the default priiors 
+# Use the default priors 
 us_election_model <- stan_glm(
   formula = vote_biden ~ state + biden_won + sex + age_bracket + race + hispanic + educ + urban,
   data = survey_analysis_subset,
