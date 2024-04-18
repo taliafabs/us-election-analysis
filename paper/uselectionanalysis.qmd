@@ -1,6 +1,6 @@
 ---
 title: "Forecasting the 2024 U.S. Presidential Election"
-subtitle: "My subtitle if needed"
+subtitle: "President Joe Biden Projected to win the Popular Vote Based on MRP Analysis"
 author: 
   - Talia Fabregas
 thanks: "Code and data are available at: https://github.com/taliafabs/us-election-analysis.git"
@@ -37,10 +37,12 @@ library(tidyverse)
 
 ## load data
 # change file path to the location of cleaned survey and poststrat data on local computer
-survey_analysis_data <- arrow::read_parquet("/Users/talia/us-election-analysis/data/analysis_data/survey_analysis_data.parquet")
-survey_analysis_subset <- arrow:read_parquet("/Users/talia/us-election-analysis/data/analysis_data/survey_analysis_subset.parquet")
+setwd("/Users/talia/us-election-analysis")
+survey_analysis_data <- arrow::read_parquet("data/analysis_data/survey_analysis_data.parquet")
 
-poststrat_analysis_data <- arrow::read_parquet("/Users/talia/us-election-analysis/data/analysis_data/poststrat_analysis_data.parquet")
+survey_analysis_subset <- arrow::read_parquet("/Users/talia/us-election-analysis/data/analysis_data/survey_analysis_subset.parquet")
+
+poststrat_analysis_data <- arrow::read_parquet("data/analysis_data/poststrat_analysis_data.parquet")
 ```
 
 
@@ -52,14 +54,14 @@ The 2024 U.S. Presidential election will take place on Tuesday, November 5th. Am
 
 # Data {#sec-data}
 
-## Survey Data {#sec=survey}
+## Survey Data {#sec-survey}
 ```{r}
 #| echo: false
 #| warning: false
 #| message: false
 #| eval: true
-#| label: fig-surveyrace
-#| fig-cap: Preferred presidential candidates of survey respondents, by gender and race
+#| label: fig-subsetrace
+#| fig-cap: Preferred presidential candidates of survey subset respondents, by gender and race
 
 survey_analysis_subset$vote24 <- ifelse(survey_analysis_subset[,1] == 1, "Joe Biden", "Donald Trump")
 
@@ -76,12 +78,186 @@ survey_analysis_subset |>
   coord_flip() +
   scale_fill_brewer(palette = "Set1") +
   theme(legend.position = "bottom")
+# code for this graph was obtained from telling stories with data chapter 13
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| eval: true
+#| label: fig-subseteduc
+#| fig-cap: Preferred presidential candidates of survey subset respondents, by highest level of education
+
+survey_analysis_subset |>
+  ggplot(aes(x = educ, fill = vote24)) +
+  geom_bar(position = "fill") +
+  facet_wrap(facets = vars(sex)) +
+  theme_minimal() +
+  labs(
+    x = "Highest education",
+    y = "Proportion",
+    fill = "Preferred Presidential Candidate"
+  ) +
+  coord_flip() +
+  scale_fill_brewer(palette = "Set1") +
+  theme(legend.position = "bottom")
+
+# survey_analysis_subset |>
+#   ggplot(aes(x = educ, fill = vote24)) +
+#   geom_col(position = "dodge") +
+#   facet_wrap(facets = vars(sex)) +
+#   theme_minimal() +
+#   labs(
+#     x = "Highest education",
+#     y = "Number of respondents",
+#     fill = "Preferred Presidential Candidate"
+#   ) +
+#   coord_flip() +
+#   scale_fill_brewer(palette = "Set1") +
+#   theme(legend.position = "bottom")
+
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| eval: true
+#| label: fig-subset-urban_rural
+#| fig-cap: Preferred presidential candidate of subset respondents living in urban vs rural areas
+
+survey_analysis_subset |>
+  ggplot(aes(x = urban, fill = vote24)) +
+  stat_count(position = "dodge") +
+  facet_wrap(facets = vars(sex)) +
+  theme_minimal() +
+  labs(
+    y = "Number of respondents",
+    fill = "Preferred Presidential Candidate"
+  ) +
+  scale_fill_brewer(palette = "Set1") +
+  theme(legend.position = "bottom")
+
+# code for this graph is from telling stories with data chapter 13
+```
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| eval: true
+#| label: fig-subset-state2020_subset
+#| fig-cap: Preferred presidential candidate of subset respondents in states won by Trump vs Biden in 2020
+#| 
+survey_analysis_subset$StateWinner2020 <- ifelse(survey_analysis_subset[,3] == 1, "Blue States", "Red States")
+survey_analysis_subset |>
+  ggplot(aes(x = StateWinner2020, fill = vote24)) +
+    facet_wrap(facets = vars(sex)) +
+  stat_count(position = "dodge") +
+  theme_minimal() +
+  labs(
+    y = "Number of respondents",
+    fill = "State winner in 2020"
+  ) +
+  scale_fill_brewer(palette = "Set1") +
+  theme(legend.position = "bottom")
+
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| eval: true
+#| message: false
+#| label: fig-electoral-map-survey-subset
+#| fig-cap: Electoral college map based on the subsetted survey data
+
+library(ggplot2)
+library(statebins)
+
+# this code comes from matthewwankiewicz 
+# US_election_forecast/paper/forecasting_us_election.rmd
+# also cited in text
+
+survey_analysis_subset <- na.omit(survey_analysis_subset)
+survey_electoral_map <- survey_analysis_subset %>%
+  group_by(state) %>%
+  summarise(prop = mean(vote_biden))
+
+survey_electoral_map %>%
+  mutate(statename = str_to_title(state)) %>%
+  ggplot(aes(fill = prop, state = statename)) +
+  geom_statebins() +
+  scale_fill_gradient2(low = "#d12531", high = "#244999",
+                       mid = "white", midpoint = 0.5) +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank()) +
+  labs(fill = "Proportion Voting \nfor Biden")
+```
+
+@fig-electoral-map-survey illustrates the proportion of subsetted survey respondents in each state who plan to support President Biden in the 2024 election. Overall, the survey data set appears to have stronger overall support for President Joe Biden than the general U.S. electorate.
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| label: tbl-subset_results
+#| tbl-cap: Popular vote and electoral college based on subset survey data
+
+
+electoral_college <- read_csv("/Users/talia/us-election-analysis/data/analysis_data/electoral_college_votes.csv", show_col_types = FALSE)
+# downloaded and cleaned it
+electoral_college$state <- tolower(electoral_college$state)
+
+electoral_college$electoral_votes <- as.numeric(electoral_college$electoral_votes)
+
+prop_biden_states <- survey_analysis_subset %>%
+  group_by(state) %>%
+  summarise(prop = mean(vote_biden))
+
+prop_biden_states$state <- tolower(prop_biden_states$state)
+
+merged_subset_ec <- merge(electoral_college, prop_biden_states, by="state")
+
+biden_states <- merged_subset_ec |>
+  filter(prop > 0.5)
+
+trump_states <- merged_subset_ec |>
+  filter(prop <= 0.5)
+
+biden_ec_survey <- sum(biden_states$electoral_votes)
+trump_ec_survey <- sum(trump_states$electoral_votes)
+
+num_respondents <- nrow(survey_analysis_subset)
+num_biden <- sum(survey_analysis_subset$vote_biden)
+num_trump <- num_respondents - num_biden
+
+percent_biden = round((num_biden / num_respondents)*100, 2)
+percent_trump = round((num_trump / num_respondents)*100,2)
+
+biden_survey <- tibble(
+  "Survey Estimate:" = c("Num Votes", "% Votes", "Electoral College"),
+  "Biden" = c(num_biden,
+              percent_biden,
+              biden_ec_survey
+              ),
+  "Trump" = c(num_trump,
+              percent_trump,
+              trump_ec_survey)
+)
+
+# Set row names
+rownames(biden_survey) <- NULL
+
+# Render the table using kable
+kable(biden_survey, align = "c") %>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
 ```
 
 
-## Post Stratification Data {#sec-poststrat}
-
-
+<!-- ## Post Stratification Data {#sec-poststrat} -->
 
 # Model
 
@@ -93,15 +269,21 @@ Here we briefly describe the Bayesian analysis model used to investigate... Back
 
 
 \begin{align} 
-y_i|\mu_i, \sigma &\sim \mbox{Normal}(\mu_i, \sigma) \\
-\mu_i &= \alpha + \beta_i + \gamma_i\\
-\alpha &\sim \mbox{Normal}(0, 2.5) \\
-\beta &\sim \mbox{Normal}(0, 2.5) \\
-\gamma &\sim \mbox{Normal}(0, 2.5) \\
-\sigma &\sim \mbox{Exponential}(1)
+vote\_biden_i|\pi_i &\sim \mbox{Bern}(\pi_i) \\
+\small
+\mbox{logit}(\pi_i) &= \beta_0 + \beta_1 \text{sex}_i + \beta_2  \text{age\_bracket}_i + \beta_3 \text{race}_i +\beta_4 \text{race\_hispanic}_i+\beta_5 \text{education\_level}_i + \beta_6 \text{urban}_i \\
+\beta_0 &\sim \mbox{Normal}(0, 2.5) \\
+\beta_1 &\sim \mbox{Normal}(0, 2.5) \\
+\beta_2 &\sim \mbox{Normal}(0, 2.5) \\
+\beta_3 &\sim \mbox{Normal}(0, 2.5) \\
+\beta_4 &\sim \mbox{Normal}(0, 2.5) \\
+\beta_5 &\sim \mbox{Normal}(0, 2.5) \\
+\beta_6 &\sim \mbox{Normal}(0, 2.5)
+\end{align}
 \end{align}
 
 We run the model in R [@citeR] using the `rstanarm` package of @rstanarm. We use the default priors from `rstanarm`.
+
 
 
 ### Model justification
@@ -147,7 +329,7 @@ props <- poststrat_analysis_data %>%
 num_per_state <- poststrat_analysis_data %>%
   group_by(state) %>%
   summarise(total_respondents = n())
-# 
+
 biden_support_by_state <- us_election_model %>%
   add_epred_draws(newdata = props) %>%
   rename(support_biden_predict = .epred) %>%
@@ -160,95 +342,181 @@ biden_support_by_state <- us_election_model %>%
     lower = quantile(support_biden_predict, 0.025),
     upper = quantile(support_biden_predict, 0.975)
   )
+
+
+merged_states <- merge(num_per_state, biden_support_by_state, by="state")
+
+merged_states$mean_weighted_sum <- merged_states$total_respondents * merged_states$mean
+merged_states$lower_weighted_sum <- merged_states$total_respondents * merged_states$lower
+merged_states$upper_weighted_sum <- merged_states$total_respondents * merged_states$upper
+
+biden_mean <- sum(merged_states$mean_weighted_sum) / sum(merged_states$total_respondents)
+biden_lower <- sum(merged_states$lower_weighted_sum) / sum(merged_states$total_respondents)
+biden_upper <- sum(merged_states$upper_weighted_sum) / sum(merged_states$total_respondents)
+
+biden_popvote <- tibble(
+  "Estimate:" = c("Lower Estimate", "Mean Estimate", "Upper Estimate"),
+  "Biden %" = c(round(biden_lower * 100, 2),
+                round(biden_mean * 100, 2),
+                round(biden_upper * 100, 2)),
+  "Trump %" = c(round((1 - biden_lower) * 100, 2),
+                round((1 - biden_mean) * 100, 2),
+                round((1 - biden_upper) * 100, 2))
+)
+
 # 
-# 
-# merged_states <- merge(num_per_state, biden_support_by_state, by="state")
-# 
-# merged_states$mean_weighted_sum <- merged_states$total_respondents * merged_states$mean
-# merged_states$lower_weighted_sum <- merged_states$total_respondents * merged_states$lower
-# merged_states$upper_weighted_sum <- merged_states$total_respondents * merged_states$upper
-# 
-# 
-# biden_mean <- sum(merged_states$mean_weighted_sum) / sum(merged_states$total_respondents)
-# biden_lower <- sum(merged_states$lower_weighted_sum) / sum(merged_states$total_respondents)
-# biden_upper <- sum(merged_states$upper_weighted_sum) / sum(merged_states$total_respondents)
-# 
-# biden_popvote <- tibble(
-#   "Estimate:" = c("Lower Estimate", "Mean Estimate", "Upper Estimate"),
-#   "Biden %" = c(round(biden_lower * 100, 2), 
-#                 round(biden_mean * 100, 2), 
-#                 round(biden_upper * 100, 2)),
-#   "Trump %" = c(round((1 - biden_lower) * 100, 2), 
-#                 round((1 - biden_mean) * 100, 2), 
-#                 round((1 - biden_upper) * 100, 2))
-# )
-# 
-# # Set row names
-# rownames(biden_popvote) <- NULL
-# 
-# # electoral college
-# # had chatgpt make me an electoral college csv
-# electoral_college <- read_csv("electoral_college_votes.csv", show_col_types = FALSE)
-# 
-# 
-# electoral_college$electoral_votes <- as.numeric(electoral_college$electoral_votes)
-# 
-# merged_ec <- merge(biden_support_by_state, electoral_college, by = "state")
-# 
-# biden_states_mean <- merged_ec |>
-#   filter(mean >= 0.5)
-# 
-# trump_states_mean <- merged_ec |>
-#   filter(mean < 0.5)
-# 
-# biden_ec_mean <- sum(biden_states_mean$electoral_votes)
-# trump_ec_mean <- sum(trump_states_mean$electoral_votes)
-# 
-# biden_states_lower <- merged_ec |>
-#   filter(lower >= 0.5)
-# trump_states_lower <- merged_ec |>
-#   filter(lower < 0.5)
-# 
-# biden_ec_lower <- sum(biden_states_lower$electoral_votes)
-# 
-# biden_states_upper <- merged_ec |>
-#   filter(upper >= 0.5)
-# 
-# biden_ec_upper <- sum(biden_states_upper$electoral_votes)
-# 
-# 
-# biden_ec_poststrat <- tibble(
-#   "Electoral College Estimate:" = c("Lower Estimate", "Mean Estimate", "Upper Estimate"),
-#   "Biden" = c(biden_ec_lower, biden_ec_mean, biden_ec_upper),
-#   "Trump" = c(538-biden_ec_lower, 538-biden_ec_mean, 538-biden_ec_upper)
-# )
-# 
-# # Set row names
-# rownames(biden_ec_poststrat) <- NULL
-# 
-# # popular vote table
-# kable(biden_popvote, align = "c") %>%
-#   kable_styling(bootstrap_options = "striped", full_width = F)
-# 
-# # electoral college table
-# kable(biden_ec_poststrat, align = "c") %>%
-#   kable_styling(bootstrap_options = "striped", full_width = F)
+# Set row names
+rownames(biden_popvote) <- NULL
+
+# electoral college
+# had chatgpt make me an electoral college csv
+electoral_college <- read_csv("/Users/talia/us-election-analysis/data/analysis_data/electoral_college_votes.csv", show_col_types = FALSE)
+
+electoral_college$electoral_votes <- as.numeric(electoral_college$electoral_votes)
+
+merged_ec <- merge(biden_support_by_state, electoral_college, by = "state")
+
+biden_states_mean <- merged_ec |>
+  filter(mean >= 0.5)
+
+trump_states_mean <- merged_ec |>
+  filter(mean < 0.5)
+
+biden_ec_mean <- sum(biden_states_mean$electoral_votes)
+trump_ec_mean <- sum(trump_states_mean$electoral_votes)
+
+biden_states_lower <- merged_ec |>
+  filter(lower >= 0.5)
+
+trump_states_lower <- merged_ec |>
+  filter(lower < 0.5)
+
+biden_ec_lower <- sum(biden_states_lower$electoral_votes)
+
+biden_states_upper <- merged_ec |>
+  filter(upper >= 0.5)
+
+biden_ec_upper <- sum(biden_states_upper$electoral_votes)
+
+
+biden_ec_poststrat <- tibble(
+  "Electoral College Estimate:" = c("Lower Estimate", "Mean Estimate", "Upper Estimate"),
+  "Biden" = c(biden_ec_lower, biden_ec_mean, biden_ec_upper),
+  "Trump" = c(538-biden_ec_lower, 538-biden_ec_mean, 538-biden_ec_upper)
+)
+
+# Set row names
+rownames(biden_ec_poststrat) <- NULL
+
+# popular vote table
+kable(biden_popvote, align = "c") %>%
+  # kable_styling(bootstrap_options = "striped", full_width = F) %>%
+  kable_styling(latex_options = "HOLD_position")
+
+# electoral college table
+kable(biden_ec_poststrat, align = "c") %>%
+  # kable_styling(bootstrap_options = "striped", full_width = F) %>%
+  kable_styling(latex_options = "HOLD_position")
 ```
 
 ## Electoral College Prediction
 
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| eval: true
+#| label: fig-estimatedpropsupport
+#| fig-cap: "Estimated proportion of each state voting for Biden in 2024 based on MRP analysis"
 
+library(scales)  
 
+# instrucitons and code provided in chapter 16 of telling stories with data were
+# used for this visualization
 
+biden_support_by_state |>
+  ggplot(aes(y = mean, x = fct_reorder(state, mean))) +
+  geom_point(color = ifelse(biden_support_by_state$mean > 0.5, "blue", "red")) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0, color = ifelse(biden_support_by_state$mean > 0.5, "blue", "red")) +
+  geom_hline(yintercept = 0.5, linetype = "dashed") +
+  labs(
+    x = "State",
+    y = "Estimated proportion support for Biden"
+  ) +
+  theme_classic() +
+  scale_y_continuous(labels = scales::percent)+  # Setting y-axis to display percentages
+  coord_flip() +
+  theme(axis.text.y = element_text(size = 6)) 
+```
 
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| eval: true
+#| label: fig-estimatedpropsupport2
+#| fig-cap: "Estimated proportion of each state voting for Biden in 2024 Post-Stratification vs Subsetted Survey Data"
 
+survey_analysis_data$state <- tolower(survey_analysis_data$state)
+biden_support_by_state |>
+  ggplot(aes(y = mean, x = fct_reorder(state, mean))) +
+  geom_point(color = ifelse(biden_support_by_state$mean > 0.5, "blue", "red")) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0, color = ifelse(biden_support_by_state$mean > 0.5, "blue", "red")) +
+  geom_point(
+    data = survey_analysis_data |>
+      summarise(n = n(),
+                .by = c(state, vote_biden)) |>
+      mutate(prop = n / sum(n),
+             .by = state) |>
+      filter(vote_biden == 1),
+    aes(y = prop, x = state),
+    color="#A9A9A9"
+    ) +
+  geom_hline(yintercept = 0.5, linetype = "dashed") +
+  labs(
+    x = "State",
+    y = "Estimated proportion support for Biden"
+  ) +
+  theme_classic() +
+  scale_y_continuous(labels = scales::percent)+ # Setting y-axis to display percentages
+  coord_flip() +
+  theme(axis.text.y = element_text(size = 5)) 
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| eval: true
+#| label: fig-electoralmappoststrat
+#| fig-cap: "Electoral map based on MRP analysis"
+
+poststrat_electoral_map <- biden_support_by_state %>%
+  mutate(prop = mean) 
+
+# this code comes from matthewwankiewicz 
+# US_election_forecast/paper/forecasting_us_election.rmd
+
+poststrat_electoral_map %>%
+  mutate(statename = str_to_title(state)) %>%
+  ggplot(aes(fill = prop, state = statename)) +
+  geom_statebins() +
+  scale_fill_gradient2(low = "#d12531", high = "#244999",
+                       mid = "white", midpoint = 0.5) +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank()) +
+  labs(fill = "Proportion Voting \nfor Biden")
+```
 # Discussion {#sec-discussion}
 
 ## First discussion point {#sec-first-point}
 
-If my paper were 10 pages, then should be be at least 2.5 pages. The discussion is a chance to show off what you know and what you learnt from all this. 
+If my paper were 10 pages, then should be be at least 2.5 pages. The discussion is a chance to show off what you know and what you learnt from all this. The survey dataset appears to favor President Joe Biden more than the general U.S. electorate. 
 
 ## Second discussion point
+Swing states and error ranges in the MRP analysis electoral college prediction
 
 ## Third discussion point
 
@@ -268,16 +536,195 @@ Softmax regression does risk overfitting
 
 # Appendix {-}
 
+# Additional data cleaning details {#sec-data-cleaning-details}
 
-# Additional data details
+# Additional survey data details {#sec-survey-details}
+The original survey data set contained 60,000 responses, but it was subsetted to 10,000 so that R and `rstanarm` could handle it [@citeR]. The `glm` function of the `rstanarm` package was used to fit the logistic regression model to predict 2024 presidential vote choice based on state, whether Biden or Trump won that state in 2020, sex, age bracket, race, and highest level of education completed. However, when I tried to fit the model using my original survey data set, it took hours to run and I was not able to post-stratify due to the following error: `Error: vector memory exhausted (limit reached?)`. 10,000 of the 60,000 responses were randomly selected using the `sample` function of base R. The figures below show the results of the exploratory data analysis conducted on the original survey data set.
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| eval: true
+#| label: fig-survey_race
+#| fig-cap: Preferred presidential candidates of survey respondents, by gender and race
+
+survey_analysis_data$vote24 <- ifelse(survey_analysis_data[,1] == 1, "Joe Biden", "Donald Trump")
+
+survey_analysis_data |>
+  ggplot(aes(x = race, fill = vote24)) +
+  stat_count(position = "dodge") +
+  facet_wrap(facets = vars(sex)) +
+  theme_minimal() +
+  labs(
+    x = "Race",
+    y = "Number of respondents",
+    fill = "Preferred Presidential Candidate"
+  ) +
+  coord_flip() +
+  scale_fill_brewer(palette = "Set1") +
+  theme(legend.position = "bottom")
+# code for this graph was obtained from telling stories with data chapter 13
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| eval: true
+#| label: fig-subset-state2020
+#| fig-cap: Preferred presidential candidate of survey respondents in states carried by Trump vs Biden in 2020
+#| 
+survey_analysis_data$StateWinner2020 <- ifelse(survey_analysis_data[,3] == 1, "Blue States", "Red States")
+survey_analysis_data |>
+  ggplot(aes(x = StateWinner2020, fill = vote24)) +
+      facet_wrap(facets = vars(sex)) +
+  stat_count(position = "dodge") +
+  theme_minimal() +
+  labs(
+    y = "Number of respondents",
+    fill = "State winner in 2020"
+  ) +
+  scale_fill_brewer(palette = "Set1") +
+  theme(legend.position = "bottom")
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| eval: true
+#| label: fig-surveyeduc
+#| fig-cap: Preferred presidential candidates of survey respondents, by highest level of education
+
+survey_analysis_data |>
+  ggplot(aes(x = educ, fill = vote24)) +
+  geom_bar(position = "fill") +
+  facet_wrap(facets = vars(sex)) +
+  theme_minimal() +
+  labs(
+    x = "Highest education",
+    y = "Proportion",
+    fill = "Preferred Presidential Candidate"
+  ) +
+  coord_flip() +
+  scale_fill_brewer(palette = "Set1") +
+  theme(legend.position = "bottom")
+```
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| eval: true
+#| label: fig-survey-urban_rural
+#| fig-cap: Preferred presidential candidate of survey respondents living in urban vs rural areas
+
+survey_analysis_data |>
+  ggplot(aes(x = urban, fill = vote24)) +
+  stat_count(position = "dodge") +
+  facet_wrap(facets = vars(sex)) +
+  theme_minimal() +
+  labs(
+    y = "Number of respondents",
+    fill = "Preferred Presidential Candidate"
+  ) +
+  scale_fill_brewer(palette = "Set1") +
+  theme(legend.position = "bottom")
+
+# code for this graph is from telling stories with data chapter 13
+```
+```{r}
+#| echo: false
+#| warning: false
+#| eval: true
+#| message: false
+#| label: fig-electoral-map-survey
+#| fig-cap: Electoral college map based on the survey dataset
+
+library(ggplot2)
+library(statebins)
+
+# this code comes from matthewwankiewicz 
+# US_election_forecast/paper/forecasting_us_election.rmd
+# also cited in text
+
+survey_analysis_data <- na.omit(survey_analysis_data)
+survey_electoral_map <- survey_analysis_data %>%
+  group_by(state) %>%
+  summarise(prop = mean(vote_biden))
+
+survey_electoral_map %>%
+  mutate(statename = str_to_title(state)) %>%
+  ggplot(aes(fill = prop, state = statename)) +
+  geom_statebins() +
+  scale_fill_gradient2(low = "#d12531", high = "#244999",
+                       mid = "white", midpoint = 0.5) +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank()) +
+  labs(fill = "Proportion Voting \nfor Biden")
+```
+
 
 # Model details {#sec-model-details}
 
 ## Posterior predictive check
+```{r}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| label: fig-posterior
+#| layout-ncol: 1
+#| fig-cap: "Examining how the model fits, and is affected by, the data"
+#| fig-subcap: ["Posterior prediction check", "Comparing the posterior with the prior"]
 
+pp_check(us_election_model) +
+  theme_classic() +
+  theme(legend.position = "bottom")
 
+posterior_vs_prior(us_election_model) +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1") +
+  theme(legend.position = "bottom") +
+  coord_flip()
+```
 
-## Diagnostics
+## Markov Chain Monte Carlo
+```{r}
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| label: fig-mcmc
+#| fig-cap: "Checking the convergence of the Markov Chain Monte Carlo (MCMC) algorithm"
+#| fig-subcap: ["Rhat plot", "Trace plot"]
+#| layout-ncol: 1
+
+plot(us_election_model, "rhat") + 
+  theme_classic() +
+  theme(axis.text.y = element_text(size = 5))
+  
+
+cat("\n")
+
+plot(us_election_model, "trace") 
+```
+
+## Credibility intervals
+```{r}
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| label: fig-modelplot
+#| fig-cap: "90% Credibility intervals for the predictors of vote_biden"
+modelplot(us_election_model, conf_level = 0.9) +
+  labs(x = "90% credibility interval") +
+  theme(axis.text.y = element_text(size = 5))
+```
+
 
 
 \newpage
