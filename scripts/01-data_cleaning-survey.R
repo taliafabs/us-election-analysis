@@ -158,6 +158,8 @@ reduced_survey_data <- reduced_survey_data |>
                           age >= 60 ~ "60+")
   )
 
+reduced_survey_data <- na.omit(reduced_survey_data)
+
 
 reduced_survey_data$race <- as.factor(reduced_survey_data$race)
 reduced_survey_data$educ <- as.factor(reduced_survey_data$educ)
