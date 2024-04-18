@@ -48,7 +48,7 @@ poststrat_analysis_data <- arrow::read_parquet("data/analysis_data/poststrat_ana
 
 # Introduction
 
-You can and should cross-reference sections and sub-sections. We use @citeR and @rohan.
+You can and should cross-reference sections and sub-sections. We use @citeR 
 
 The 2024 U.S. Presidential election will take place on Tuesday, November 5th. Amidst unprecedented levels of political polarization, American voters are set to see a remat
 
@@ -91,32 +91,18 @@ survey_analysis_subset |>
 
 survey_analysis_subset |>
   ggplot(aes(x = educ, fill = vote24)) +
-  geom_bar(position = "fill") +
+  stat_count(position = "dodge") +
   facet_wrap(facets = vars(sex)) +
   theme_minimal() +
   labs(
-    x = "Highest education",
-    y = "Proportion",
+    x = "Highest Level of Education",
+    y = "Number of respondents",
     fill = "Preferred Presidential Candidate"
   ) +
   coord_flip() +
   scale_fill_brewer(palette = "Set1") +
   theme(legend.position = "bottom")
-
-# survey_analysis_subset |>
-#   ggplot(aes(x = educ, fill = vote24)) +
-#   geom_col(position = "dodge") +
-#   facet_wrap(facets = vars(sex)) +
-#   theme_minimal() +
-#   labs(
-#     x = "Highest education",
-#     y = "Number of respondents",
-#     fill = "Preferred Presidential Candidate"
-#   ) +
-#   coord_flip() +
-#   scale_fill_brewer(palette = "Set1") +
-#   theme(legend.position = "bottom")
-
+# code for this graph was obtained from telling stories with data chapter 13
 ```
 
 ```{r}
@@ -265,25 +251,26 @@ The goal of our modelling strategy is twofold. Firstly,...
 
 Here we briefly describe the Bayesian analysis model used to investigate... Background details and diagnostics are included in [Appendix -@sec-model-details].
 
-## Model set-up
+## Model set-up {#sec-model1}
+The model that I used is as follows:
 
-
-\begin{align} 
+\begin{align*} 
 vote\_biden_i|\pi_i &\sim \mbox{Bern}(\pi_i) \\
 \small
-\mbox{logit}(\pi_i) &= \beta_0 + \beta_1 \text{sex}_i + \beta_2  \text{age\_bracket}_i + \beta_3 \text{race}_i +\beta_4 \text{race\_hispanic}_i+\beta_5 \text{education\_level}_i + \beta_6 \text{urban}_i \\
+\mbox{logit}(\pi_i) &= \beta_0 + \beta_1 \text{state}_i + \beta_2  \text{biden\_won}_i + \beta_3 \text{sex}_i +\beta_4 \text{age\_bracket}_i \\
+&+ \beta_5 \text{race}_i + \beta_6 \text{hispanic}_i + \beta_7 \text{educ}_i + \beta8 \text{urban}_i \\
 \beta_0 &\sim \mbox{Normal}(0, 2.5) \\
 \beta_1 &\sim \mbox{Normal}(0, 2.5) \\
 \beta_2 &\sim \mbox{Normal}(0, 2.5) \\
 \beta_3 &\sim \mbox{Normal}(0, 2.5) \\
 \beta_4 &\sim \mbox{Normal}(0, 2.5) \\
 \beta_5 &\sim \mbox{Normal}(0, 2.5) \\
-\beta_6 &\sim \mbox{Normal}(0, 2.5)
-\end{align}
-\end{align}
+\beta_6 &\sim \mbox{Normal}(0, 2.5) \\
+\beta_7 &\sim \mbox{Normal}(0, 2.5) \\
+\beta_8 &\sim \mbox{Normal}(0, 2.5) \\
+\end{align*}
 
-We run the model in R [@citeR] using the `rstanarm` package of @rstanarm. We use the default priors from `rstanarm`.
-
+where the binary indicator variable `vote\_biden_{i}` is equal to 1 if the respondent's preferred 2024 presidential candidate is President Joe Biden (D) , or 0 if their preferred candidate is former President Donald Trump (R). I fit the model on the survey data [@survey] in R [@citeR] using the `stan_glm` function and the default priors of the `rstanarm` package [@rstanarm]. Fitting the logistic regression model on the survey data "teaches" it to classify each respondent as a Biden or Trump voter based on the state that they live in, whether Biden or Trump won that state in 2020, their sex, age bracket, race, highest level of education, and whether they live in an urban area. I then apply the model to my post-stratification dataset [@citeIPUMS] to forecast the national popular vote and electoral college results for the 2024 U.S. presidential election. When applied to my post-stratification dataset, the logistic regression model uses the same variables (state, whether Biden or Trump won that state in 2020, sex, age bracket, race, highest level of education, and urban) and what it learned from being fit on the survey dataset to classify each census respondent as a Biden or Trump voter. 
 
 
 ### Model justification
@@ -308,16 +295,15 @@ us_election_model <-
 # Results {#sec-results}
 
 ## Popular Vote Prediction
-
+I got my popular vote prediction by applying the model outlined in @sec-model1 to my post-stratification data set to predict the 2024 preferred presidential candidate of each ACS 2022 respondent [@citeIPUMS]. @tbl-poststrat_results1
 ```{r}
 #| echo: false
 #| warning: false
 #| message: false
 #| eval: true
 #| include: true
-#| label: tbl-popvotepost-popularvote
-#| tbl-cap: "2024 U.S. election result estimates for Joe Biden based on post-stratification"
-#| tbl-subcap: ["Popular Vote", "Electoral College"]
+#| label: tbl-poststrat_results1
+#| tbl-cap: "2024 U.S. election popular vote estimates based on post-stratification analysis"
 
 props <- poststrat_analysis_data %>%
   group_by(state, biden_won, race, hispanic, age_bracket, sex, educ, urban) %>%
@@ -368,6 +354,22 @@ biden_popvote <- tibble(
 # Set row names
 rownames(biden_popvote) <- NULL
 
+# popular vote table
+kable(biden_popvote, align = "c") %>%
+  # kable_styling(bootstrap_options = "striped", full_width = F) %>%
+  kable_styling(latex_options = "HOLD_position")
+```
+
+## Electoral College Prediction
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| eval: true
+#| label: tbl-poststrat_results2
+#| tbl-cap: "2024 U.S. election electoral college estimates based on multilevel regression with post-stratification (MRP) analysis"
+
 # electoral college
 # had chatgpt make me an electoral college csv
 electoral_college <- read_csv("/Users/talia/us-election-analysis/data/analysis_data/electoral_college_votes.csv", show_col_types = FALSE)
@@ -408,18 +410,11 @@ biden_ec_poststrat <- tibble(
 # Set row names
 rownames(biden_ec_poststrat) <- NULL
 
-# popular vote table
-kable(biden_popvote, align = "c") %>%
-  # kable_styling(bootstrap_options = "striped", full_width = F) %>%
-  kable_styling(latex_options = "HOLD_position")
-
 # electoral college table
 kable(biden_ec_poststrat, align = "c") %>%
   # kable_styling(bootstrap_options = "striped", full_width = F) %>%
   kable_styling(latex_options = "HOLD_position")
 ```
-
-## Electoral College Prediction
 
 ```{r}
 #| echo: false
