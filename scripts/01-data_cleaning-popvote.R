@@ -4,7 +4,7 @@
 # Date: 14 April 2024
 # Contact: talia.fabregas@mail.utoronto.ca
 # License: MIT
-# Pre-requisites: Download and save the 2020 national popular vote tracker csv
+# Pre-requisites: Download and save the 2020 national popular vote tracker csv from Cook Political Report
 # from Cook Political Report
 # Any other information needed? No
 
