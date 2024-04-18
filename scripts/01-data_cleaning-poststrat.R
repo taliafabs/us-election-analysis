@@ -1,7 +1,7 @@
 #### Preamble ####
 # Purpose: Download and clean the American Communities Survey Post Stratification Data
 # Author: Talia Fabregas
-# Date: 9 April 2024
+# Date: 10 April 2024
 # Contact: talia.fabregas@mail.utoronto.ca
 # License: MIT
 # Pre-requisites: Download and save the American Communities Survey Data from 
