@@ -44,3 +44,14 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# Raw data
+.raw_survey_data.csv
+.usa_00001.dta
+.popvote2020.csv
+.raw_survey1.csv
+
+# Analysis data
+.popvote_analysis_data.csv
+.survey_analysis_data.parquet
+.poststrat_analysis_data.parquet
