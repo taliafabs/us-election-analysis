@@ -7,10 +7,10 @@ This repo provides the code associated with the 2024 US Election Analysis projec
 - The survey dataset that I used is the 2022 CES Common Content Dataset. It is available for download via URL from Harvard Dataverse. https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/PR4L8P
 - The post-stratification dataset that I used is a subset of the American Community Survey (ACS) 2022, provied by IPUMS. https://usa.ipums.org/usa/
 
-In addition to survey and post-stratification data, I used datasets containing information about national popular vote results in the 2020 U.S. presidential election and the number of electoral college votes allotted to each state. Once again, these datasets are not mine to share, so I have outlined how I obtained them below.
+In addition to survey and post-stratification data, I used datasets containing information about national popular vote results in the 2020 U.S. presidential election and the number of electoral college votes allotted to each state for part of my analysis. Once again, these datasets are not mine to share, so I have outlined how I obtained them below.
 
 - The 2020 U.S. election national popular vote results dataset that I used is the 2020 National Popular Vote Tracker csv from Cook Political Report. It can be found using the following link: https://www.cookpolitical.com/2020-national-popular-vote-tracker
-- The electoral college dataset that I used is from ChatGPT.
+- The electoral college dataset that I used was produced by ChatGPT.  I copied the distribution of electoral votes from the National Archives, pasted it into ChatGPT, and asked ChatGPT to write a CSV file. Like all my LLM usage, this interaction with ChatGPT is documented in `other/llm/usage.txt`. The distribution of electoral votes can be found using the following link: https://www.archives.gov/electoral-college/allocation
 
 ## File Structure
 
@@ -25,4 +25,4 @@ The repo is structured as:
 
 ## Statement on LLM usage
 
-ChatGPT 3.5 was used to debug and modify aspects of the code, including survey and post-stratification data cleaning, data visualizations, and tables. My interactions with ChatGPT 3.5 over the course of this project can be found in `other/llm/usage.txt`
+ChatGPT 3.5 was used to debug and modify aspects of the code, including survey and post-stratification data cleaning, data visualizations, and tables. Additionally, I used ChatGPT 3.5 to produce `data/analysis_data/electoral_colleges.csv`. My interactions with ChatGPT 3.5 over the course of this project can be found in `other/llm/usage.txt`
