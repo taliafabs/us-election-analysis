@@ -65,7 +65,7 @@ simulated_poststrat_data <- tibble(
   # race
   race = sample(races, size=sim_size, replace=TRUE),
   # hispanic
-  hispanic = sample(is_hispanic, size=sim_size, replace=TRUE)
+  hispanic = sample(is_hispanic, size=sim_size, replace=TRUE),
   # highest level of education
   highest_education = sample(education_levels, size=sim_size, replace=TRUE),
   urban = sample(area, size=sim_size, replace=TRUE)
