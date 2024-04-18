@@ -20,9 +20,9 @@ This data sheet was put together with the guidance of @gebru2021datasheets and t
 1. *For what purpose was the dataset created? Was there a specific task in mind? Was there a specific gap that needed to be filled? Please provide a description.*
     - This dataset was created to study the voting behavior of American adults leading up to the November 2022 midterm elections. The CES aims to study how American adults view their representatives during elections, how they have voted, and how political behavior is influenced by geographic and demographic factors [@survey].
 2. *Who created the dataset (for example, which team, research group) and on behalf of which entity (for example, company, institution, organization)?*
-    - The dataset was created by 62 research teams and organizations. Each team had its own Principal Investigator, and individual research groups put together their own team surveys.
+    - This dataset was put together by Talia Fabregas for research purposes at the University of Toronto. The original dataset, the CES Common Content 2022, was created by 62 research teams and organizations. Each team had its own Principal Investigator, and individual research groups put together their own team surveys.
 3. *Who funded the creation of the dataset? If there is an associated grant, please provide the name of the grantor and the grant name and number.*
-    - Harvard Dataverse
+    - The creation of the dataset was not funded. 
 4. *Any other comments?*
     - No
 
@@ -31,7 +31,7 @@ This data sheet was put together with the guidance of @gebru2021datasheets and t
 1. *What do the instances that comprise the dataset represent (for example, documents, photos, people, countries)? Are there multiple types of instances (for example, movies, users, and ratings; people and interactions between them; nodes and edges)? Please provide a description.*
 	- Each instance in the dataset represents 1 voter in the United States who responded to the CES 2022 survey questions
 2. *How many instances are there in total (of each type, if appropriate)?*
-	- There are 60,000 instances in total
+	- There are 10,000 instances in total. Each instance in the dataset is an American adult who responded to a CES survey in late 2022. 
 3. *Does the dataset contain all possible instances or is it a sample (not necessarily random) of instances from a larger set? If the dataset is a sample, then what is the larger set? Is the sample representative of the larger set (for example, geographic coverage)? If so, please describe how this representativeness was validated/verified. If it is not representative of the larger set, please describe why not (for example, to cover a more diverse range of instances, because instances were withheld or unavailable).*
 	- The CES 2022 dataset is designed to be representative of all US adults; not every survey response is included in the data set to make it representative [@survey].
 4. *What data does each instance consist of? "Raw" data (for example, unprocessed text or images) or features? In either case, please provide a description.*
