@@ -27,9 +27,9 @@ if(all(survey$vote_biden == 1 |survey$vote_biden==0)){
 }
 
 # Test that the variable state has the same levels in the survey and poststrat data sets
-if((unique(survey$state)) == (unique(poststrat$state))){
+if(identical(sort(unique(survey$state)), sort(unique(poststrat$state)))) {
   "The survey and poststrat data sets have the same levels for the state variable"
-} else{
+} else {
   "The survey and poststrat data sets do not have the same levels for the state variable"
 }
 
