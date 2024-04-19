@@ -1,5 +1,6 @@
 #### Preamble ####
-# Purpose: Download and clean the American Communities Survey Post Stratification Data
+# Purpose: Download and clean the American Communities Survey Post Stratification Data 
+# from IPUMS
 # Author: Talia Fabregas
 # Date: 10 April 2024
 # Contact: talia.fabregas@mail.utoronto.ca
@@ -20,9 +21,11 @@ library(haven)
 raw_poststrat_data <- read_dta("data/raw_data/usa_00001.dta")
 raw_poststrat_data <- labelled::to_factor(raw_poststrat_data)
 
+# Read in the popular vote data
 popvote2020 <- read_csv("/Users/talia/us-election-analysis/data/analysis_data/popvote_analysis_data.csv")
 
 # Select relevant variables
+
 reduced_poststrat_data1 <- raw_poststrat_data |> 
   filter(stateicp != "state not identified") |>
   filter(!is.na(age))
