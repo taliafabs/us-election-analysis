@@ -59,6 +59,10 @@ I used R programming language [@citeR] and the `tidyverse` [@citetidyverse], `ja
 
 My survey data comes from the 2022 Comprehensive Election Study (CES), provided by Harvard Dataverse. Sixty research teams participated in the 2022 CES. It is part of the ongoing Cooperative Election Study (CES), which has been conducted every year since 2006 to study elections in the United States using large-scale survey datasets [@survey]. @survey explain that the CES aims to build off of the work of the 2005 Massachusetts Institute of Technology Public Opinion Research and Training Lab (PORTL) study. The CES was known as the Cooperative Congressional Election Study (CCES) before 2020 [@survey].
 
+Alternatively, I could have used the most recent weekly release of the America's Political Pulse Survey, provided by the Polarization Research Lab as my survey dataset. The Polarization Research Lab is a research group and resource hub led by top scholars at Dartmouth College, Stanford University, and the University of Pennsylvania that collects and analyzes data to study polarization and democracy [@americaspoliticalpulse]. The America's Political Pulse Survey has been conducted weekly by the Polarization Research Lab since 2022 and its purpose is to study political polarization and respect for democratic norms in the United States [@americaspoliticalpulse]. There are America's Political Pulse Datasets that were put together as recently as March 2024, however, I opted not to use it because it is too sparse to fit an effective logistic regression model. Each America's Political Pulse dataset contains only 1000 observations, meaning that smaller states have few or no observations. For example, the January 12-19 2024 dataset contained noisy data including very few and overwhelmingly Democratic respondents from GOP stronghold states such as Wyoming and Kansas and no respondents from Vermont [@americaspoliticalpulse].
+
+My post-stratification data set was provided by IPUMS. It is a subset of the American Community Survey (ACS) 2022 [@citeIPUMS] . I obtained it by visiting the IPUMS online database, selecting relevant variables, and downloading a subset containing 500,000 observations.
+
 ## Survey data {#sec-survey}
 
 I selected a random subset of the final release of the 2022 CES Common Content Dataset as my survey data. The 2022 CES Common Content Dataset is a nationally representative sample of 60,000 American adults and it includes sample identifiers such as state and congressional district, demographic profile questions, pre-election questions, post-election questions, and questions about candidate and party preferences [@survey]. Most survey respondents are registered with the YouGov panel to receive notifications about surveys and are rewarded with points that can be exchanged for gift cards, however some come from other survey platforms and online ads [@survey]. As outlined by @survey, not all responses are included in the 2022 CES Common Content Dataset to ensure that it is as representative as possible. I use a random subset of 10,000 of the 60,000 respondents. I explain my sub-setting process and why my random subset is representative of the 2022 CES Common Content Dataset in @sec-data-cleaning-details.
@@ -66,6 +70,8 @@ I selected a random subset of the final release of the 2022 CES Common Content D
 I do not use the entire questionnaire in my study; I focus on survey questions about demographics, party identification, and vote choice. The variables from the 2022 CES Common Content Dataset that I selected include: `pid3`: 3-point party identification, `presvote16post`: who the respondent voted for in the 2016 U.S. presidential election, `presvote20post`: who the respondent voted for in the 2020 U.S. presidential election, `state`: the state that the respondent lives in, `gender4`: gender identity, `birthyr`: year of birth, `race`: race or ethnicity, `hispanic`: whether the respondent identifies as Hispanic, `educ`: highest level of education completed, and `urbancity`: the type of area that the respondent lives in. `gender4` initially included male, female, non-binary, and other. I re-named it to `sex` and only used male and female because the `sex` variable in my post-stratification dataset provided by IPUMS only includes male and female. This is one example of how data science can ignore LGBTQ+ identities and reduce humanity to something that can easily be quantified [@citeKeyes].
 
 The 2022 CES Common Content Dataset focuses on the periods leading up to (September 29 to November 8) and following (November 10 to December 15) the 2022 U.S. midterm elections [@survey]. While the survey contains specific questions about party identification, strength of party identification, and votes congressional, senate, and gubernatorial elections, it does not ask about preferred 2024 presidential candidate. The survey was conducted in late 2022, when the Republican 2024 presidential nominee was not yet known. Party identification and recent vote choices, especially in the 2020 presidential election where the nominees were also Joe Biden and Donald Trump, are strong indicators of 2024 vote choice. I used `pid3`: party identification, `presvote16post`: 2016 presidential vote, and `presvote20post` to determine whether each respondent would vote for Joe Biden or Donald Trump in the 2024 presidential election and construct the `vote_biden` binary indicator variable. `vote_biden` is equal to 1 if a respondent's preferred 2024 presidential candidate is Joe Biden, and 0 if it is Donald Trump. I discuss the creation of the `vote_biden` variable in more detail in @sec-data-cleaning-details.
+
+The code for the following visualizations was obtained from Telling Stories with Data [@tswd]. As seen in @fig-subsetrace, support for Biden and Trump in the subset of the 2022 CES Common Content Dataset that I used varies by gender and race. White women were more likely to support President Biden than their white male counterparts. Overall, Black and Asian respondents showed strong support for Biden. Black women showed overwhelming support for Biden. This indicates that both gender and race are likely predictors of support for Biden.
 
 ```{r}
 #| echo: false
@@ -95,6 +101,8 @@ survey_analysis_subset |>
   theme(legend.position = "bottom")
 # code for this graph was obtained from telling stories with data chapter 13
 ```
+
+The education gap in vote preference has widened since 2016 [@pew2021].
 
 ```{r}
 #| echo: false
@@ -126,7 +134,7 @@ survey_analysis_subset |>
 #| message: false
 #| eval: true
 #| label: fig-subset-urban_rural
-#| fig-cap: Preferred presidential candidate of subset respondents living in urban vs rural areas
+#| fig-cap: Preferred presidential candidate of subset respondents living in urban, suburban, and rural areas
 
 survey_analysis_subset |>
   ggplot(aes(x = urban, fill = vote24)) +
@@ -297,7 +305,7 @@ The post-stratification data that I used is a subset of the 2022 American Commun
 
 The code for @fig-demographics1, @fig-datasetraces, and @fig-stateprops was obtained from @citeMatthew.
 
-Demographic and geographic patterns in my survey and post-stratification datasets are comparable, but not identical. @fig-demographics1 compares the percentages of CES 2022 Common Content respondent
+Demographic and geographic patterns in my survey and post-stratification datasets are comparable, but there are some discrepancies. @fig-demographics1 compares the distribution of CES 2022 Common Content (survey) and ACS 2022 (post-stratification) respondents by age bracket, highest level of education completed, and gender. Approximately 10% of survey respondents are 18-29 years old, compared to 28.4% of post-stratification respondents. Consequently, the survey dataset contains a higher percentage of respondents from the older age brackets than the post-stratification dataset. The percentages of respondents with a postgraduate degree are comparable in the survey and post-stratification datasets, at 13.8% and 10.8%, respectively. However we see a significant difference in the percentages of survey and post-stratification respondents who did not graduate from high school, at 34.1% and 20.7%, respectively. In addition to this, the post-stratification dataset is more gender balanced than the survey dataset; there are slightly more female respondents than male respondents in the survey dataset.
 
 ```{r}
 #| echo: false
@@ -402,6 +410,8 @@ demographic_variables |> ggplot(aes(as.factor(level), pct, group=as.factor(type)
   geom_hline(yintercept = 0.5, alpha = 0.35) 
 ```
 
+@fig-datasetraces compares the distributions of survey and post-stratification respondents by race, which are comparable. However, Hispanic respondents have more representation in the post-stratification dataset (14.2%) compared to the survey dataset (8.55%).
+
 ```{r}
 #| echo: false
 #| warning: false
@@ -409,6 +419,7 @@ demographic_variables |> ggplot(aes(as.factor(level), pct, group=as.factor(type)
 #| eval: true
 #| label: fig-datasetraces
 #| fig-cap: Survey vs post-stratification voter race demographics
+
 race_variables <- rbind(races, races_poststrat,
                         hispanic, hispanic_poststrat)
 
@@ -419,6 +430,8 @@ race_variables |> ggplot(aes(as.factor(level), pct, group=as.factor(type), linet
   scale_y_continuous(labels = scales::percent) +
   geom_hline(yintercept = 0.5, alpha = 0.35) 
 ```
+
+@fig-stateprops shows the distribution of survey and post-stratification respondents across all 50 states. As expected, California and Texas have the highest percentages of voters in each of the survey and post-stratification datasets. However, the post-stratification dataset includes larger percentages of respondents from California and Texas, and, consequently, smaller percentages of respondents from smaller states. On the contrary, the survey dataset includes smaller percentages of respondents from California and Texas, and more respondents from Florida, Maryland, Michigan, New Jersey, New York, Ohio, and Pennsylvania.
 
 ```{r}
 #| echo: false
@@ -458,7 +471,7 @@ voters_by_state |> ggplot(aes(as.factor(level), pct, group=as.factor(type), line
 
 # Model {#sec-model}
 
-I performed multi-level regression with post-stratification (MRP) to predict support for president Joe Biden and former president Donald Trump in the 2024 U.S. presidential election. To perform MRP analysis, I fit a logistic regression model on the survey data and applied it to the post-stratification data. Logistic regression is a popular algorithm for binary classification; its goal is to learn how to classify examples (which in this case, are American voters) as Biden or Trump voters based on their features (the state that they live in, whether Biden or Trump won that state in 2020, their sex, age bracket, race, highest level of education, and whether they live in an urban area) \[@citeTensorFlow\]. The logistic regression model uses what it learned from being fit on the survey dataset to classify each respondent in the ACS 2022 (post-stratification) dataset as a a Biden or Trump voter.
+I performed multi-level regression with post-stratification (MRP) to predict support for president Joe Biden and former president Donald Trump in the 2024 U.S. presidential election. To perform MRP analysis, I fit a logistic regression model on the survey data and applied it to the post-stratification data. Logistic regression is a popular algorithm for binary classification; its goal is to learn how to classify examples (which in this case, are American voters) as Biden or Trump voters based on their features (the state that they live in, whether Biden or Trump won that state in 2020, their sex, age bracket, race, highest level of education, and whether they live in an urban area) [@citeTensorFlow].
 
 ## Model set-up {#sec-model1}
 
@@ -481,13 +494,13 @@ vote\_biden_i|\pi_i &\sim \mbox{Bern}(\pi_i) \\
 \beta_8 &\sim \mbox{Normal}(0, 2.5) \\
 \end{align*}
 ```
-where the binary indicator variable vote\\\_biden\_{i} is equal to 1 if the respondent's preferred 2024 presidential candidate is President Joe Biden (D), or 0 if their preferred candidate is former President Donald Trump (R). My model uses logistic regression, it is not without tradeoffs. Firstly, logistic regression can only be used to predict a binary outcome variable. As far as my model is concerned, the only two vote choices for U.S. adults in the upcoming presidential election are Joe Biden and Donald Trump. The possibility of voting for a third-party candidate is not considered. I discuss the tradeoffs, benefits, weaknesses, and limitations associated with the use of a logistic regression model to forecast the U.S. election in @sec-lr.
+where the binary indicator variable vote_biden\_{i} is equal to 1 if the respondent's preferred 2024 presidential candidate is President Joe Biden (D), or 0 if their preferred candidate is former President Donald Trump (R). My model uses logistic regression, it is not without tradeoffs. Firstly, logistic regression can only be used to predict a binary outcome variable. As far as my model is concerned, the only two vote choices for U.S. adults in the upcoming presidential election are Joe Biden and Donald Trump. The possibility of voting for a third-party candidate is not considered. I discuss the tradeoffs, benefits, weaknesses, and limitations associated with the use of a logistic regression model to forecast the U.S. election in @sec-lr.
 
 ## Model Justification
 
 Logistic regression is a reasonable and appropriate choice for forecasting the U.S. presidential election because there are only two candidates who can win electoral college votes and the White House on November 5, 2024: Joe Biden and Donald Trump. In 2020, third-party candidates received only 1.9% of the national popular vote [@citecook]. I expect to see a positive relationship between support for President Biden and living in a state that he won in 2020, female gender, non-white race, college education or higher, and living in an urban or suburban area.
 
-@pew2018 found that across all race groups, a higher percentage of women than men identified with the Democratic Party. @pew2018 also found sizable differences in party affiliation among different races; White voters are more likely to affiliate with or lean toward the Republican Party, while Black, Asian, and Hispanic voters overwhelmingly support the Democratic Party. @pew2021 found that Trump received a higher Hispanic vote share in 2021 than 2016, but Hispanic voters without a college education were substantially more likely to support Trump than Hispanic voters with a college education or higher. Similarly, @pew2018 found that higher levels of education are associated with increased support for and leaning towards the Democratic Party.
+Across all race groups, women are more likely to support the Democratic Party than their male counterparts [@pew2018]. @pew2018 also found sizable differences in party affiliation among different races; White voters are more likely to affiliate with or lean toward the Republican Party, while Black, Asian, and Hispanic voters overwhelmingly support the Democratic Party. @pew2021 found that Trump received a higher Hispanic vote share in 2021 than 2016, but Hispanic voters without a college education were substantially more likely to support Trump than Hispanic voters with a college education or higher. Similarly, @pew2018 found that higher levels of education are associated with increased support for and leaning towards the Democratic Party. America developed a rural-urban divide in the 1990s and it has kept widening since then [@citecornellians]. America's urban-suburban-rural divide applies to both party identification and political opinions [@citeParker]. In a 2017 survey, @citeParker found that 62% of registered voters who live in urban areas identify as Democrats or leaning Democratic, compared to only 31% who identify as Republican or lean Republican. The gap was narrower for registered voters who live in suburban areas, with 47% and 45%, respectively. Registered voters in rural areas leaned more Republican than Democratic, at 54% and 38%, respectively. I obtained similar results in @sec-survey, where I found that urban voters showed the most support for President Biden, followed by suburban voters.
 
 ```{r}
 #| echo: false
