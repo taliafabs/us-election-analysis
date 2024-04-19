@@ -6,7 +6,7 @@ author:
 thanks: "Code and data are available at: https://github.com/taliafabs/us-election-analysis.git"
 date: today
 date-format: long
-abstract: "The 2024 U.S. Presidential Election will take place on November 5. Voters will once again choose between President Joe Biden and former President Donald Trump. In this report, I used multi-level regression with post-stratification (MRP) to estimate the results of the upcoming presidential election. I fit a logistic regression model on the survey data and applied to the post-stratification data. Using the results of my MRP analysis, I can predict that President Joe Biden will win 55.47% of the popular vote and defeat former President Trump in the electoral college 413 to 125. The electoral college prediction has a large error range close margins in several key battleground states were predicted based on the MRP analysis."
+abstract: "The 2024 U.S. Presidential Election will take place on November 5. Voters will once again choose between President Joe Biden and former President Donald Trump. In this report, I used multi-level regression with post-stratification (MRP) to estimate the results of the upcoming presidential election. I fit a logistic regression model on the survey data and applied to the post-stratification data. Using the results of my MRP analysis, I can predict that President Joe Biden will win 55.47% of the popular vote and defeat former President Trump in the electoral college 413 to 125. However, the electoral college prediction raises questions because many states were predicted to see close a close margin between Biden and Trump."
 format: pdf
 number-sections: true
 bibliography: references.bib
@@ -49,7 +49,7 @@ poststrat_analysis_data <- arrow::read_parquet("data/analysis_data/poststrat_ana
 
 Every four years, on the first Tuesday of November, Americans head to the polls to elect their president. The 2024 United States presidential election will take place on Tuesday November 5, 2024. In an era of unprecedented political polarization and distrust in democratic institutions, America will see a rematch of the 2020 election. President Joe Biden will seek a second term and former president Donald Trump will try to become the second president to serve two non-consecutive terms. The only U.S. president to return to office after losing his re-election bid is Grover Cleveland in 1893 [@citeWaxman].
 
-This report builds on the lessons that I learned when I completed my first US Election Forecast last month. The survey data set that I used was provided by the Cooperative Election Study (CES) Dataverse. The CES is a nationally representative survey of 60,000 American adults, conducted before and after U.S. presidential and midterm elections [@survey]. It aims to study the voting behavior of American adults and how it is influenced by geographic and demographic factors [@survey]. The post-stratification data that I used was provided by the Integrated Public Use Microdata Series (IPUMS) USA online database. IPUMS provides American survey and census data, dating back to 1850, with the help of 105 statistical organizations [@citeIPUMS]. I selected a subset of the 2022 American Communities Survey (ACS) to use as my post-stratification data. I performed MRP analysis to estimate the 2024 U.S. presidential election results. This involves using a smaller survey dataset (\~10,000 respondents) to fit a model to predict vote preference based on geographic and demographic characteristics and then applying it to a larger post-stratification dataset (\~500,000 respondents). The model will learn how to classify respondents as Trump or Biden voters using the survey dataset. It will then use what it has learned to classify ACS respondents as Trump or Biden voters when applied to the post-stratification dataset. I will use these results to estimate the popular vote and electoral college results of the 2024 U.S. presidential election.
+This report builds on the lessons that I learned when I completed my first US Election Forecast last month. The survey data set that I used was provided by the Cooperative Election Study (CES) Dataverse. The CES is a nationally representative survey of 60,000 American adults, conducted before and after U.S. presidential and midterm elections [@survey]. It aims to study the voting behavior of American adults and how it is influenced by geographic and demographic factors [@survey]. The post-stratification data that I used was provided by the Integrated Public Use Microdata Series (IPUMS) USA online database. IPUMS provides American survey and census data, dating back to 1850, with the help of 105 statistical organizations [@citeIPUMS]. I selected a subset of the 2022 American Communities Survey (ACS) to use as my post-stratification data. I performed MRP analysis to estimate the 2024 U.S. presidential election results. This involves using a smaller survey dataset (\~10,000 respondents) to fit a logistic regression model to predict vote preference based on geographic and demographic characteristics and then applying it to a larger post-stratification dataset (\~500,000 respondents). The model will learn how to classify respondents as Trump or Biden voters using the survey dataset. It will then use what it has learned to classify ACS respondents as Trump or Biden voters when applied to the post-stratification dataset. I will use these results to estimate the popular vote and electoral college results of the 2024 U.S. presidential election.
 
 This report features four sections. In @sec-data, I discuss the context of the survey and post-stratification dataset, present the results of exploratory data analysis, and use tables and visualizations to show what the variables look like and explain how they interact. In @sec-model I explain, outline, and justify the Bayesian logistic regression model that I used to predict vote preference. In @sec-results, I use tables and graphs to present the results of my MRP analysis, which include a popular vote and an electoral college prediction for the 2024 U.S. election. In @sec-discussion, I discuss how my analysis was conducted in more detail, what we can learn from the popular vote and electoral college predictions, the limitations of my datasets and model, why logistic regression was used and the case for (and against) SoftMax regression in U.S. election analysis, and how I hope to extend and improve this report in the future.
 
@@ -293,7 +293,11 @@ kable(biden_survey, align = "c") %>%
 
 ## Post-stratification data {#sec-poststrat}
 
-The post-stratification data that I used is a subset of the 2022 American Community Survey (ACS) from IPUMS [@citeIPUMS]. It includes 500,000 census respondents and was downloaded from the IPUMS online database. I selected variables that match the ones in my survey dataset so that my model could easily be applied to my post-stratification data. The variables that I selected include:
+The post-stratification data that I used is a subset of the 2022 American Community Survey (ACS) from IPUMS [@citeIPUMS]. It includes 500,000 census respondents and was downloaded from the IPUMS online database. I selected variables that match the ones in my survey dataset so that my model could easily be applied to my post-stratification data. I carefully chose variables that would later be used in my logistic regression model that predicts 2024 preferred presidential candidate. The variables that I selected include: `stateicp`: the state that the respondent lives in, `age`, `sex`: the sex of the respondent (the ACS 2022 dataset only includes male and female), `race`: respondent's race or ethnicity, `hispan`: whether the respondent identifies as Hispanic or not, `educ`: highest level of education completed, and `metro`: the type of area that the respondent lives in. I re-named, cleaned, and re-factored variable levels to ensure that all variables in my post-stratification analysis dataset matched my survey analysis dataset.
+
+The code for @fig-demographics1, @fig-datasetraces, and @fig-stateprops was obtained from @citeMatthew.
+
+Demographic and geographic patterns in my survey and post-stratification datasets are comparable, but not identical. @fig-demographics1 compares the percentages of CES 2022 Common Content respondent
 
 ```{r}
 #| echo: false
@@ -393,7 +397,7 @@ demographic_variables <- rbind(gender, gender_poststrat,
 demographic_variables |> ggplot(aes(as.factor(level), pct, group=as.factor(type), linetype = as.factor(type))) +
   geom_line() + facet_grid(~group, scales = "free") +
   theme(axis.text.x = element_text(angle=70, size = 6, hjust = 1), legend.position = "bottom") +
-  labs(x = "Category", y = "Proportion", linetype = "data set") +
+  labs(x = "Category", y = "% of Respondents", linetype = "data set") +
   scale_y_continuous(labels = scales::percent) +
   geom_hline(yintercept = 0.5, alpha = 0.35) 
 ```
@@ -411,7 +415,7 @@ race_variables <- rbind(races, races_poststrat,
 race_variables |> ggplot(aes(as.factor(level), pct, group=as.factor(type), linetype = as.factor(type))) +
   geom_line() + facet_grid(~group, scales = "free") +
   theme(axis.text.x = element_text(angle=70, size = 6, hjust = 1), legend.position = "bottom") +
-  labs(x = "Category", y = "Proportion", linetype = "data set") +
+  labs(x = "Category", y = "% of Respondents", linetype = "data set") +
   scale_y_continuous(labels = scales::percent) +
   geom_hline(yintercept = 0.5, alpha = 0.35) 
 ```
@@ -452,7 +456,7 @@ voters_by_state |> ggplot(aes(as.factor(level), pct, group=as.factor(type), line
 
 # Model {#sec-model}
 
-I performed multi-level regression with post-stratification (MRP) to predict support for president Joe Biden and former president Donald Trump in the 2024 U.S. presidential election. To perform MRP analysis, I fit the model on the survey data and applied it to the post-stratification data. Fitting the logistic regression model on the survey data teaches it to classify each respondent as a Biden or Trump voter based on the state that they live in, whether Biden or Trump won that state in 2020, their sex, age bracket, race, highest level of education, and whether they live in an urban area. I then apply the model to my post-stratification dataset [@citeIPUMS] to forecast the popular vote and electoral college results for the 2024 U.S. presidential election. When applied to my post-stratification dataset, the logistic regression model uses the same variables (state, whether Biden or Trump won that state in 2020, sex, age bracket, race, highest level of education, and urban) and what it learned from being fit on the survey dataset to classify each census respondent as a Biden or Trump voter.
+I performed multi-level regression with post-stratification (MRP) to predict support for president Joe Biden and former president Donald Trump in the 2024 U.S. presidential election. To perform MRP analysis, I fit a logistic regression model on the survey data and applied it to the post-stratification data. Logistic regression is a popular algorithm for binary classification; its goal is to learn how to classify examples (which in this case, are American voters) as Biden or Trump voters based on their features (the state that they live in, whether Biden or Trump won that state in 2020, their sex, age bracket, race, highest level of education, and whether they live in an urban area) \[@citeTensorFlow\]. The logistic regression model uses what it learned from being fit on the survey dataset to classify each respondent in the ACS 2022 (post-stratification) dataset as a a Biden or Trump voter.
 
 ## Model set-up {#sec-model1}
 
@@ -475,9 +479,11 @@ vote\_biden_i|\pi_i &\sim \mbox{Bern}(\pi_i) \\
 \beta_8 &\sim \mbox{Normal}(0, 2.5) \\
 \end{align*}
 ```
-where the binary indicator variable vote_biden\_{i} is equal to 1 if the respondent's preferred 2024 presidential candidate is President Joe Biden (D), or 0 if their preferred candidate is former President Donald Trump (R). My model uses logistic regression, it is not without tradeoffs. Firstly, logistic regression can only be used to predict a binary outcome variable. As far as my model is concerned, the only two vote choices for U.S. adults in the upcoming presidential election are Joe Biden and Donald Trump. The possibilities of voting third-party or not voting at all are not considered. I discuss the tradeoffs, benefits, weaknesses, and limitations associated with the use of a logistic regression model to forecast the U.S. election in more depth in @sec-lr.
+where the binary indicator variable vote\\\_biden\_{i} is equal to 1 if the respondent's preferred 2024 presidential candidate is President Joe Biden (D), or 0 if their preferred candidate is former President Donald Trump (R). My model uses logistic regression, it is not without tradeoffs. Firstly, logistic regression can only be used to predict a binary outcome variable. As far as my model is concerned, the only two vote choices for U.S. adults in the upcoming presidential election are Joe Biden and Donald Trump. The possibility of voting for a third-party candidate is not considered. I discuss the tradeoffs, benefits, weaknesses, and limitations associated with the use of a logistic regression model to forecast the U.S. election in @sec-lr.
 
 ## Model justification
+
+Logistic regression is a reasonable and appropriate choice for forecasting the U.S. presidential election because there are only two candidates who can win electoral college votes and the White House on November 5, 2024: Joe Biden and Donald Trump. In 2020, third-party candidates received only 1.9% of the national popular vote [@citecook].
 
 ```{r}
 #| echo: false
@@ -499,9 +505,9 @@ us_election_model <-
 
 ## Popular Vote Prediction
 
-I got my popular vote prediction by applying the model outlined in @sec-model1 to my post-stratification data set to predict the 2024 preferred presidential candidate of each ACS 2022 respondent [@citeIPUMS]. I created a data frame that I obtained my national popular vote prediction by taking the weighted mean of `vote_biden` across
+Based on the results of my MRP analysis, which involved applying the logistic regression model outlined @sec-model to a subset of the ACS 2022 dataset, I can predict that Joe Biden will win the popular vote on November 5. President Biden is estimated to win 55.47% of the popular vote, while former President Trump is estimated to win 44.53% of the popular vote. This means that the logistic regression model that I fit on the CES 2022 Common Content Dataset classified 55.47% of examples (ACS 2022 respondents) as Biden voters based on their features (`state`, `biden_won`, `age_bracket`, `sex`, `race`, `hispanic`, `educ`, and `urban`). The remaining 44.53% were classified as Trump voters.
 
-I estimated the upper, lower, and mean quantile of the proportion of voters in each state supporting President Biden. The lower quantile, mean, and upper quantile estimates of the national support for President Biden, which correspond to the upper quantile, mean, and lower quantile estimates of national support for former President Trump are summarized in @tbl-poststrat_results1.
+The lower quantile, mean, and upper quantile estimates of the national support for President Biden, which correspond to the upper quantile, mean, and lower quantile estimates of national support for former President Trump are summarized in @tbl-poststrat_results1. The lower quantile estimate for Biden shows Trump winning the popular vote by a 2.9 percentage point margin; it predicts 51.45% of the popular vote for Trump. It is important to note that logistic regression performs binary classification, so the estimated popular vote percentages for Joe Biden and Donald Trump based on my MRP analysis will always add up to 100%.
 
 ```{r}
 #| echo: false
@@ -548,7 +554,7 @@ biden_lower <- sum(merged_states$lower_weighted_sum) / sum(merged_states$total_r
 biden_upper <- sum(merged_states$upper_weighted_sum) / sum(merged_states$total_respondents)
 
 biden_popvote <- tibble(
-  "Estimate:" = c("Lower Estimate", "Mean Estimate", "Upper Estimate"),
+  " " = c("Lower Estimate", "Mean Estimate", "Upper Estimate"),
   "Biden %" = c(round(biden_lower * 100, 2),
                 round(biden_mean * 100, 2),
                 round(biden_upper * 100, 2)),
@@ -563,13 +569,18 @@ rownames(biden_popvote) <- NULL
 
 # popular vote table
 kable(biden_popvote, align = "c") %>%
-  # kable_styling(bootstrap_options = "striped", full_width = F) %>%
   kable_styling(latex_options = "HOLD_position")
 ```
 
 ## Electoral College Prediction
 
-The lower quantile, mean, and upper quantile estimates for the percentage of votes that President Biden will receive in each state based on my MRP analysis are illustrated in @fig-estimatedpropsupport. The blue (states where the mean prediction for Biden is over 50%) or red line (states where the mean prediction for Trump is over 50%) shows the 95% prediction interval for the percentage of votes that Biden will receive. The mean estimates are denoted by the dot in the middle of each line. The 95% prediction interval falls on both sides of the 50% threshold for numerous states ...
+The lower quantile, mean, and upper quantile estimates for the percentage of votes that President Biden will receive in each state based on my MRP analysis are illustrated in @fig-estimatedpropsupport. The blue (states where the mean prediction for Biden is over 50%) or red line (states where the mean prediction for Trump is over 50%) shows the 95% prediction interval for the percentage of votes that Biden will receive. The mean estimates are denoted by the dot in the middle of each line. The 95% prediction interval falls on both sides of the 50% threshold for numerous states. This means that based on the results of my MRP analysis, we can expect to see close races in a number of states that saw close margins between Trump and Biden in 2020 including, but not limited to, Arizona, Iowa, New Hampshire, New Mexico, Georgia, Texas, Indiana, Ohio, Pennsylvania, and Wisconsin [@citeCNN]. There are a number of other states, including South Dakota, Maine, Minnesota, Delaware, Kentucky, and North Carolina that see the 95% prediction interval fall on both sides of the 50% support for Biden threshold.
+
+@fig-estimatedpropsupport2 shows the same estimates as @fig-estimatedpropsupport, in comparison with the percentage of CES 2022 survey respondents who plan to vote for Joe Biden. The estimates based on the survey data are represented by the gray dots. There is some variation between survey and post-stratification estimates, but in most cases, the survey estimates fall within the 95% prediction interval. However, most states had higher support for President Biden in the survey dataset than in the MRP analysis results. This makes sense, because the CES 2022 survey dataset showed stronger support for President Biden (60.3%) than the general U.S. electorate and the exploratory data analysis conducted in @sec-survey showed that respondents living in states carried by Biden in 2020 showed higher levels of support for President Biden than their counterparts in states carried by Trump in 2020 when gender was held constant.
+
+@fig-electoralmappoststrat uses an electoral map to illustrate the same information as @fig-estimatedpropsupport. It shows the mean estimated proportion of votes that President Joe Biden will receive in each state. The electoral college votes of the states that appear blue in @fig-electoralmappoststrat would go to President Biden, and the electoral college votes of the states that appear red would go to President Trump. California, Oregon, Washington, Massachusetts, Connecticut, New York, New Jersey, and Vermont appear very blue on this map; this indicates that my MRP analysis predicted a comfortable margin of victory for Biden in each of these historically Democratic stronghold states [@citeCNN]. On the contrary, Idaho, Nebraska, Idaho, Wyoming, and Oklahoma appear quite red on the map. This indicates that my MRP analysis predicted a comfortable margin of victory for former President Trump in these states.
+
+@tbl-poststrat_results2 shows the estimates for the electoral college based on the lower, mean, and upper estimates for the percentage of votes in each state that Biden will receive shown in @fig-estimatedpropsupport. The lower estimate for Joe Biden shows him losing the electoral college to Donald Trump, 220 to 318. However, the mean and upper estimates each show Joe Biden defeating Donald Trump in the electoral college by a wide margin, at 413 to 125 and 517 to 21, respectively. There is a huge difference between the lower and upper electoral college estimates for Joe Biden because estimates based on the lower and upper quantiles of the 95% prediction interval for support for his re-election campaign in each state often fall on opposite sides of the 50% threshold. One of those states is Texas, which is allotted the second-most electoral college votes, behind California [@citecook]. Wisconsin, Pennsylvania, Indiana, Georgia, Texas, and New Mexico appear very light-colored in @fig-electoralmappoststrat. These states also saw 95% prediction intervals for the percentage of votes that President Biden will receive fall on both sides of the 50% victory threshold. The winner of each of these states would get all of the electoral votes, regardless of the margin. Therefore, based on my MRP analysis, the results of 2024 U.S. presidential election may be defined close races in key battleground states, where a win for either Trump or Biden is within the 95% prediction interval.
 
 ```{r}
 #| echo: false
@@ -718,7 +729,7 @@ poststrat_electoral_map %>%
 
 ## Predicting the Popular Vote with Logistic Regression {#sec-first-point}
 
-## Swing States had Close Margins and Large Error Ranges
+## Questions Raised by the Electoral College Prediction
 
 Swing states and error ranges in the MRP analysis electoral college prediction
 
