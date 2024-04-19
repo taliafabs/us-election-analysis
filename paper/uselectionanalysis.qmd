@@ -45,19 +45,28 @@ survey_analysis_subset <- arrow::read_parquet("/Users/talia/us-election-analysis
 poststrat_analysis_data <- arrow::read_parquet("data/analysis_data/poststrat_analysis_data.parquet")
 ```
 
-
 # Introduction
 
-Every four years, American adults head to the polls to elect their president. The 2024 United States presidential election will take place on Tuesday November 5, 2024. Amidst unprecedented levels of political polarization and distrust in democratic institutions, America will see a rematch of the 2020 election. President Joe Biden will seek a second term and former president Donald Trump will try to become the second president to serve two non-consecutive terms. 
+Every four years, on the first Tuesday of November, Americans head to the polls to elect their president. The 2024 United States presidential election will take place on Tuesday November 5, 2024. In an era of unprecedented political polarization and distrust in democratic institutions, America will see a rematch of the 2020 election. President Joe Biden will seek a second term and former president Donald Trump will try to become the second president to serve two non-consecutive terms. The only U.S. president to return to office after losing his re-election bid is Grover Cleveland in 1893 [@citeWaxman].
 
-The survey data set that I used was provided by the 2022 Cooperative Election Study (CES) and downloaded from Harvard Dataverse. The CES is a nationally representative survey of 60,000 American adults, conducted before and after U.S. presidential and midterm elections [@survey]. It aims to study the voting behavior of American adults and how it is influenced by geographic and demographic factors [@survey]. I selected a subset of the final release of the 2022 CES Common Content Dataset to use as my survey data. The post-stratification data that I used was downloaded from the Integrated Public Use Microdata Series (IPUMS) USA online database. IPUMS provides survey and census data, dating back to 1850, with the help of 105 statistical organizations [@citeIPUMS]. I selected a subset of the 2022 American Communities Survey (ACS). I use multi-level regression with post-stratification (MRP) to use as my post-stratification data. I performed MRP analysis to forecast the 2024 U.S. presidential election. This involves using a smaller survey dataset (~10,000 respondents) to fit a model to predict vote preference based on geographic and demographic characteristics and then applying it to a larger post-stratification dataset (~500,000 respondents). The model will learn how to classify respondents as Trump or Biden voters using the survey dataset. It will then use what it has learned to classify ACS respondents as Trump or Biden voters when applied to the post-stratification dataset. I will use these results to predict the popular vote and electoral college results of the 2024 U.S. presidential election.
+This report builds on the lessons that I learned when I completed my first US Election Forecast last month. The survey data set that I used was provided by the Cooperative Election Study (CES) Dataverse. The CES is a nationally representative survey of 60,000 American adults, conducted before and after U.S. presidential and midterm elections [@survey]. It aims to study the voting behavior of American adults and how it is influenced by geographic and demographic factors [@survey]. The post-stratification data that I used was provided by the Integrated Public Use Microdata Series (IPUMS) USA online database. IPUMS provides survey and census data, dating back to 1850, with the help of 105 statistical organizations [@citeIPUMS]. I selected a subset of the 2022 American Communities Survey (ACS) to use as my post-stratification data. I performed MRP analysis to estimate the 2024 U.S. presidential election results. This involves using a smaller survey dataset (\~10,000 respondents) to fit a model to predict vote preference based on geographic and demographic characteristics and then applying it to a larger post-stratification dataset (\~500,000 respondents). The model will learn how to classify respondents as Trump or Biden voters using the survey dataset. It will then use what it has learned to classify ACS respondents as Trump or Biden voters when applied to the post-stratification dataset. I will use these results to estimate the popular vote and electoral college results of the 2024 U.S. presidential election.
 
+This report features four sections. In @sec-data, I discuss the context of the survey and post-stratification dataset, present the results of exploratory data analysis, and use tables and visualizations to show what the variables look like and explain how they interact. In @sec-model I explain, outline, and justify the Bayesian logistic regression model that I used to predict vote preference. In @sec-results, I use tables and graphs to present the results of my MRP analysis, which include a popular vote and an electoral college prediction for the 2024 U.S. election. In @sec-discussion, I discuss how my analysis was conducted in more detail, what we can learn from the popular vote and electoral college predictions, the limitations of my datasets and model, why logistic regression was used and the case for (and against) SoftMax regression in U.S. election analysis, and how I hope to extend and improve this report in the future.
 
-I used R programming language [@citeR] and the `tidyverse` [@citetidyverse], `janitor` [@citejanitor], `ggplot` [@citeggplot2], `knitr` [@citeknitr], `readr` [@citereadr], `arrow` [@citearrow], and `rstanarm` [@citerstanarm] packages to clean my survey and post-stratification datasets, create my data visualizations, fit my logistic regression model, and apply my logistic regression model.
+I used R programming language [@citeR] and the `tidyverse` [@citetidyverse], `janitor` [@citejanitor], `ggplot` [@citeggplot], `knitr` [@citeknitr], `readr` [@citereadr], `arrow` [@citearrow], and `rstanarm` [@rstanarm] packages to clean my survey and post-stratification datasets, create my data visualizations, fit my logistic regression model, and apply my logistic regression model.
 
 # Data {#sec-data}
 
+My survey data comes from the 2022 Comprehensive Election Study (CES), provided by Harvard Dataverse. Sixty research teams participated in the 2022 CES. It is part of the ongoing Cooperative Election Study (CES), which has been conducted every year since 2006 to study elections in the United States using large-scale survey datasets [@survey]. @survey explains that CCES aims to build off of the work of the 2005 Massachussets Institute of Technology Public Opinion Research and Training Lab (PORTL) study. The CES was known as the Cooperative Congressional Election Study (CCES) before 2020 [@survey].
+
 ## Survey Data {#sec-survey}
+
+I selected a random subset of the final release of the 2022 CES Common Content Dataset as my survey data. The 2022 CES Common Content Dataset is a nationally representative sample of 60,000 American adults and it includes sample identifiers such as state and congressional district, demographic profile questions, pre-election questions, post-election questions, and questions about candidate and party preferences [@survey]. Most survey respondents are registered with the YouGov panel to receive notifications about surveys and are rewarded with points that can be exchanged for gift cards, however some come from other survey platforms and online ads [@survey]. As outlined by @survey, not all responses are included in the 2022 CES Common Content Dataset to ensure that it is as representative as possible. I use a random subset of 10,000 of the 60,000 respondents. I explain my sub-setting process and why my random subset is representative of the 2022 CES Common Content Dataset in @sec-data-cleaning-details.
+
+I do not use the entire questionnaire in my study; I focus on survey questions about demographics, party identification, and vote choice. The variables from the 2022 CES Common Content Dataset that I selected include: `pid3`: 3-point party identification, `presvote16post`: who the respondent voted for in the 2016 U.S. presidential election, `presvote20post`: who the respondent voted for in the 2020 U.S. presidential election, `state`: the state that the respondent lives in, `gender4`: gender identity, `birthyr`: year of birth, `race`: race or ethnicity, `hispanic`: whether the respondent identifies as Hispanic, `educ`: highest level of education completed, and `urbancity`: the type of area that the respondent lives in. `gender4` initially included male, female, non-binary, and other. I re-named it to `sex` and only used male and female because the `sex` variable in my post-stratification dataset provided by IPUMS only includes male and female. This is one example of how data science can ignore LGBTQ+ identities and reduce humanity to something that can easily be quantified [@citeKeyes].
+
+The 2022 CES Common Content Dataset focuses on the periods leading up to (September 29 to November 8) and following (November 10 to December 15) the 2022 U.S. midterm elections [@survey]. While the survey contains specific questions about party identification, strength of party identification, and votes congressional, senate, and gubernatorial elections, it does not ask about preferred 2024 presidential candidate. The survey was conducted in late 2022, when the Republican 2024 presidential nominee was not yet known. Party identification and recent vote choices, especially in the 2020 presidential election where the nominees were also Joe Biden and Donald Trump, are strong indicators of 2024 vote choice. I used `pid3`: party identification, `presvote16post`: 2016 presidential vote, and `presvote20post` to determine whether each respondent would vote for Joe Biden or Donald Trump in the 2024 presidential election and construct the `vote_biden` binary indicator variable. `vote_biden` is equal to 1 if a respondent's preferred 2024 presidential candidate is Joe Biden, and 0 if it is Donald Trump. I discuss the creation of the `vote_biden` variable in more detail in @sec-data-cleaning-details.
+
 ```{r}
 #| echo: false
 #| warning: false
@@ -67,6 +76,9 @@ I used R programming language [@citeR] and the `tidyverse` [@citetidyverse], `ja
 #| fig-cap: Preferred presidential candidates of survey subset respondents, by gender and race
 
 survey_analysis_subset$vote24 <- ifelse(survey_analysis_subset[,1] == 1, "Joe Biden", "Donald Trump")
+
+survey_analysis_subset <- survey_analysis_subset |>
+  filter(urban != "other")
 
 survey_analysis_subset |>
   ggplot(aes(x = race, fill = vote24)) +
@@ -130,6 +142,41 @@ survey_analysis_subset |>
 
 # code for this graph is from telling stories with data chapter 13
 ```
+
+```{r}
+#| echo: false
+#| warning: false
+#| eval: true
+#| message: false
+#| label: tbl-urbansubset
+#| tbl-cap: Presidential preferences of survey subset respondents living in urban, rural, and suburban areas
+
+# this code has been modified but it is originally from my previous project titled
+# US Election Forecast
+
+urban <- survey_analysis_subset |> filter(urban == "urban")
+rural <- survey_analysis_subset |> filter(urban == "rural")
+suburban <- survey_analysis_subset |> filter(urban == "suburban")
+
+biden_urban <- round(mean(urban$vote_biden)*100,2)
+biden_rural <- round(mean(rural$vote_biden)*100,2)
+biden_suburban <- round(mean(suburban$vote_biden)*100,2)
+
+urban_rural <- tibble(
+  " " = c("Urban", "Suburban","Rural"),
+  "Biden %" = c(biden_urban, biden_suburban, biden_rural),
+  "Trump %" = c(100-biden_urban, 100-biden_suburban, 100-biden_rural)
+)
+
+# Set row names
+rownames(urban_rural) <- NULL
+
+# Render the table using kable
+kable(urban_rural, align = "c") %>%
+  kable_styling(bootstrap_options = "striped", full_width = F) %>%
+    kable_styling(latex_options = "HOLD_position")
+```
+
 ```{r}
 #| echo: false
 #| warning: false
@@ -137,7 +184,7 @@ survey_analysis_subset |>
 #| eval: true
 #| label: fig-subset-state2020_subset
 #| fig-cap: Preferred presidential candidate of subset respondents in states won by Trump vs Biden in 2020
-#| 
+
 survey_analysis_subset$StateWinner2020 <- ifelse(survey_analysis_subset[,3] == 1, "Blue States", "Red States")
 survey_analysis_subset |>
   ggplot(aes(x = StateWinner2020, fill = vote24)) +
@@ -158,7 +205,7 @@ survey_analysis_subset |>
 #| eval: true
 #| message: false
 #| label: fig-electoral-map-survey-subset
-#| fig-cap: Electoral college map based on the subsetted survey data
+#| fig-cap: Electoral college map based on the subset survey data
 
 library(ggplot2)
 library(statebins)
@@ -185,7 +232,7 @@ survey_electoral_map %>%
   labs(fill = "Proportion Voting \nfor Biden")
 ```
 
-@fig-electoral-map-survey illustrates the proportion of subsetted survey respondents in each state who plan to support President Biden in the 2024 election. My subsetted survey dataset appears to show stronger support for President Joe Biden than the genral U.S. electorate both overall and at the state level. As shown in @sec-survey-details, this is not unique to the subsetted data; the complete 2022 CES Common Content Dataset shows strong support for President Biden and the Democratic Party based on 2016 vote choice (`presvote16post`), 2020 vote choice (`presvote20post`), and party identification (`pid3`). However, as seen in subset-state2020_subset, respondents who live in states won by Biden in 2020 (blue states) were more likely to support him over Trump in 2024 than those who live in states won by former president Trump in 2020 (red states). To account for this difference, and the fact that the survey dataset I used has strong support for President Biden, I created the `biden_won` variable, which is equal to 1 if a state was carried by President Biden in 2020 and 0 if it was carried by former President Trump in 2020. The data cleaning steps that I used to create the `biden_won` variable are outlined in @sec-data-cleaning-details.
+@fig-electoral-map-survey-subset illustrates the proportion of subset survey respondents in each state who plan to support President Biden in the 2024 election. My subset survey dataset appears to show stronger support for President Joe Biden than the general U.S. electorate both overall and at the state level. As shown in @sec-survey-details, this is not unique to the subset data; the complete 2022 CES Common Content Dataset shows strong support for President Biden and the Democratic Party based on 2016 vote choice (`presvote16post`), 2020 vote choice (`presvote20post`), and party identification (`pid3`). However, as seen in subset-state2020_subset, respondents who live in states won by Biden in 2020 (blue states) were more likely to support him over Trump in 2024 than those who live in states won by former president Trump in 2020 (red states). To account for this difference, and the fact that the survey dataset I used has strong support for President Biden, I created the `biden_won` variable, which is equal to 1 if a state was carried by President Biden in 2020 and 0 if it was carried by former President Trump in 2020. The data cleaning steps that I used to create the `biden_won` variable are outlined in @sec-data-cleaning-details.
 
 ```{r}
 #| echo: false
@@ -244,8 +291,9 @@ kable(biden_survey, align = "c") %>%
   kable_styling(bootstrap_options = "striped", full_width = F)
 ```
 
-
 ## Poststratification Data {#sec-poststrat}
+
+The post-stratification data that I used is a subset of the 2022 American Community Survey (ACS) from IPUMS [@citeIPUMS]. It includes 500,000 census respondents and was downloaded from the IPUMS online database. I selected variables that match the ones in my survey dataset so that my model could easily be applied to my post-stratification data. The variables that I selected include:
 
 ```{r}
 #| echo: false
@@ -402,13 +450,15 @@ voters_by_state |> ggplot(aes(as.factor(level), pct, group=as.factor(type), line
   scale_y_continuous(labels = scales::percent)
 ```
 
+# Model {#sec-model}
 
-# Model
-I performed multi-level regression with post-stratification (MRP) to predict support for president Joe Biden and former president Donald Trump in the 2024 U.S. presidential election. To perform MRP analysis, I fit the model on the survey data and applied it to the post-stratification data. Fitting the logistic regression model on the survey data teaches it to classify each respondent as a Biden or Trump voter based on the state that they live in, whether Biden or Trump won that state in 2020, their sex, age bracket, race, highest level of education, and whether they live in an urban area. I then apply the model to my post-stratification dataset [@citeIPUMS] to forecast the popular vote and electoral college results for the 2024 U.S. presidential election. When applied to my post-stratification dataset, the logistic regression model uses the same variables (state, whether Biden or Trump won that state in 2020, sex, age bracket, race, highest level of education, and urban) and what it learned from being fit on the survey dataset to classify each census respondent as a Biden or Trump voter. 
+I performed multi-level regression with post-stratification (MRP) to predict support for president Joe Biden and former president Donald Trump in the 2024 U.S. presidential election. To perform MRP analysis, I fit the model on the survey data and applied it to the post-stratification data. Fitting the logistic regression model on the survey data teaches it to classify each respondent as a Biden or Trump voter based on the state that they live in, whether Biden or Trump won that state in 2020, their sex, age bracket, race, highest level of education, and whether they live in an urban area. I then apply the model to my post-stratification dataset [@citeIPUMS] to forecast the popular vote and electoral college results for the 2024 U.S. presidential election. When applied to my post-stratification dataset, the logistic regression model uses the same variables (state, whether Biden or Trump won that state in 2020, sex, age bracket, race, highest level of education, and urban) and what it learned from being fit on the survey dataset to classify each census respondent as a Biden or Trump voter.
 
 ## Model set-up {#sec-model1}
+
 I built my Bayesian Logistic Regression model in R [@citeR] using the `stan_glm` function and the default priors of the `rstanarm` package [@rstanarm]. My model is as follows:
 
+```{=tex}
 \begin{align*} 
 vote\_biden_i|\pi_i &\sim \mbox{Bern}(\pi_i) \\
 \small
@@ -424,11 +474,10 @@ vote\_biden_i|\pi_i &\sim \mbox{Bern}(\pi_i) \\
 \beta_7 &\sim \mbox{Normal}(0, 2.5) \\
 \beta_8 &\sim \mbox{Normal}(0, 2.5) \\
 \end{align*}
+```
+where the binary indicator variable vote_biden\_{i} is equal to 1 if the respondent's preferred 2024 presidential candidate is President Joe Biden (D) , or 0 if their preferred candidate is former President Donald Trump (R). My model uses logistic regression, it is not without tradeoffs. Firstly, logistic regression can only be used to predict a binary outcome variable. As far as my model is concerned, the only two vote choices for U.S. adults in the upcoming presidential election are Joe Biden and Donald Trump. The possibilities of voting third-party or not voting at all are not considered. I discuss the tradeoffs, benefits, weaknesses, and limitations associated with the use of a logistic regression model to forecast the U.S. election in more depth in @sec-lr.
 
-where the binary indicator variable vote\_biden_{i} is equal to 1 if the respondent's preferred 2024 presidential candidate is President Joe Biden (D) , or 0 if their preferred candidate is former President Donald Trump (R). My model uses logistic regression, it is not without tradeoffs. Firstly, logistic regression can only be used to predict a binary outcome variable. As far as my model is concerned, the only two vote choices for U.S. adults in the upcoming presidential election are Joe Biden and Donald Trump. The possibilities of voting third-party or not voting at all are not considered. I discuss the tradeoffs, benefits, weaknesses, and limitations associated with the use of a logistic regression model to forecast the U.S. election in more depth in @sec-lr.
-
-
-### Model justification
+## Model justification
 
 ```{r}
 #| echo: false
@@ -446,12 +495,12 @@ us_election_model <-
   readRDS(file = here::here("models/us_election_model.rds"))
 ```
 
-
 # Results {#sec-results}
 
 ## Popular Vote Prediction
-I got my popular vote prediction by applying the model outlined in @sec-model1 to my post-stratification data set to predict the 2024 preferred presidential candidate of each ACS 2022 respondent [@citeIPUMS].
-@tbl-poststrat_results1
+
+I got my popular vote prediction by applying the model outlined in @sec-model1 to my post-stratification data set to predict the 2024 preferred presidential candidate of each ACS 2022 respondent [@citeIPUMS]. I estimated the upper, lower, and mean quantile of the proportion of voters in each state supporting President Biden. The lower quantile, mean, and upper quantile@tbl-poststrat_results1
+
 ```{r}
 #| echo: false
 #| warning: false
@@ -606,7 +655,7 @@ biden_support_by_state |>
 #| message: false
 #| eval: true
 #| label: fig-estimatedpropsupport2
-#| fig-cap: "Estimated proportion of each state voting for Biden in 2024 Post-Stratification vs Subsetted Survey Data"
+#| fig-cap: "Estimated proportion of each state voting for Biden in 2024 Post-Stratification vs subset Survey Data"
 
 survey_analysis_data$state <- tolower(survey_analysis_data$state)
 biden_support_by_state |>
@@ -660,40 +709,40 @@ poststrat_electoral_map %>%
         axis.ticks = element_blank()) +
   labs(fill = "Proportion Voting \nfor Biden")
 ```
+
 # Discussion {#sec-discussion}
 
 ## Popular Vote Prediction {#sec-first-point}
 
-If my paper were 10 pages, then should be be at least 2.5 pages. The discussion is a chance to show off what you know and what you learnt from all this. The survey dataset appears to favor President Joe Biden more than the general U.S. electorate. 
-
 ## Swing States had Close Margins and Large Error Ranges
+
 Swing states and error ranges in the MRP analysis electoral college prediction
 
-## Weaknesses and Limitations of the Datasets
+## Weaknesses and Limitations of the Survey Dataset
 
 ## The Limitations of Logistic Regression and the Case for (and against) SoftMax Regression {#sec-lr}
 
-## Next Steps
-Python, more recent data set, softmax regression, gradient descent
-Split the survey data into training, validation, and test
-Use gradient descent to find the optimal weights to maximize validation accuracy
-Apply the model to the post-stratification data
-Softmax regression does risk overfitting
+Logistic regression was completely appropriate in this case. SoftMax has more parameters and is more complex; this means that a SoftMax regression model is more likely to overfit.
 
+## Next Steps
+
+Python, more recent data set, softmax regression, gradient descent Split the survey data into training, validation, and test Use gradient descent to find the optimal weights to maximize validation accuracy Apply the model to the post-stratification data Softmax regression does risk overfitting
 
 \newpage
 
 \appendix
 
-# Appendix {-}
+# Appendix {.unnumbered}
 
 # Additional data cleaning details {#sec-data-cleaning-details}
+
 I created a binary variable, `vote_biden` that is equal to 1 if a respondent's preferred 2024 presidential candidate is Joe Biden, or 0 if it is Donald Trump. My Cooperative Election Study Common Content survey dataset was put together in 2022, so respondents were not asked about their preferred 2024 presidential candidate. However, they were asked about their party identification (`pid3`), who they voted for in the 2016 presidential election (`presvote16post`), and who they voted for in the 2020 presidential election (`presvote20post`). I started by filtering out respondents who have no party affiliation and did not vote for either major party nominee in the 2016 and 2020 presidential elections. This was done because I am using a logistic regression model, which is only capable of performing binary classification. I used this information to create the `vote_biden` indicator variable; if a respondent's `pid3` is Democratic, or they voted for the Democratic nominee in 2016 or 2020, I label them as a Biden voter (`vote_biden = 1`). Otherwise, I label them as a Trump voter (`vote_biden = 0`). As previously stated, respondents who both voted third-party and have no party affiliation were not considered because my model is not capable of performing multi-class classification and there is no indication of whether they prefer Joe Biden or Donald Trump.
 
-I downloaded the 2020 National Popular Vote Tracker from @cook, cleaned it to change the state column to match my survey and post-stratification data sets, and selected the `state`, `biden_won`, `dem_votes`, `rep_votes`, `other_votes`, and `dem_percent` columns. I then left-joined the 2020 National Popular Vote Tracker with both my survey and post-stratification datasets so that I could include Biden's performance in each state in the 2020 election to my model as a predictor for `vote_biden`. I added the binary variable, `biden_won`, to both my survey and post-stratification analysis datasets. `biden_won` is equal to 1 if Joe Biden won the electoral college votes of the state that the respondent lives in in the 2020 presidential election, and 0 if Donald Trump won the state in the 2020 presidential election. Maine and Nebraska have split electoral college votes; this means that the presidential nominee who wins each congressional district receives an electoral college vote, and an additional 2 electoral college votes are awarded for winning the statewide popular vote. In the 2020 presidential election, Joe Biden won the statewide popular vote in Maine, while Donald Trump won the statewide popular vote in Nebraska, although Biden won one congressional district in Nebraska, and Trump won one congressional district in Maine. `biden\_won` corresponds to the presidential nominee who won the statewide popular vote in the 2020 election, so`biden\_won = 1` for respondents who live in Maine, and `biden\_won = 0` for respondents who live in Nebraska. I use informatoin from the 2020 National Popular Vote tracker in various places throughout my analysis and discussion. 
+I downloaded the 2020 National Popular Vote Tracker from @cook, cleaned it to change the state column to match my survey and post-stratification data sets, and selected the `state`, `biden_won`, `dem_votes`, `rep_votes`, `other_votes`, and `dem_percent` columns. I then left-joined the 2020 National Popular Vote Tracker with both my survey and post-stratification datasets so that I could include Biden's performance in each state in the 2020 election to my model as a predictor for `vote_biden`. I added the binary variable, `biden_won`, to both my survey and post-stratification analysis datasets. `biden_won` is equal to 1 if Joe Biden won the electoral college votes of the state that the respondent lives in in the 2020 presidential election, and 0 if Donald Trump won the state in the 2020 presidential election. Maine and Nebraska have split electoral college votes; this means that the presidential nominee who wins each congressional district receives an electoral college vote, and an additional 2 electoral college votes are awarded for winning the statewide popular vote. In the 2020 presidential election, Joe Biden won the statewide popular vote in Maine, while Donald Trump won the statewide popular vote in Nebraska, although Biden won one congressional district in Nebraska, and Trump won one congressional district in Maine. `biden\_won` corresponds to the presidential nominee who won the statewide popular vote in the 2020 election, so`biden\_won = 1` for respondents who live in Maine, and `biden\_won = 0` for respondents who live in Nebraska. I use information from the 2020 National Popular Vote tracker in various places throughout my analysis and discussion.
 
 # Additional survey data details {#sec-survey-details}
-The original survey dataset contained 60,000 responses, but it was subsetted to 10,000 so that R and `rstanarm` could handle it [@citeR]. The `glm` function of the `rstanarm` package was used to fit the logistic regression model to predict 2024 presidential vote choice based on state, whether Biden or Trump won that state in 2020, sex, age bracket, race, and highest level of education completed. Although @survey advised against subsetting the 2022 CES Common Content Dataset, this was a necessary step for me. When I tried to fit the model using the original survey data set, it took hours to run and I was not able to post-stratify due to the following error: `Error: vector memory exhausted (limit reached?)`. 10,000 of the 60,000 responses were randomly selected using the `sample` function of base R. The visualizations below show the results of the exploratory data analysis conducted on the original survey data set. As seen in @fig-survey_race, @fig-survey_state2020, @fig-surveyeduc, and @fig-electoral-map-survey, the results are similar to the ones shown in @sec-survey. Therefore, I am confident that my random subset is representative of the original 2022 CES Common Content Dataset [@survey].
+
+The original survey dataset contained over 50,000 responses, but it was subset to 10,000 so that R and `rstanarm` could handle it [@citeR]. The `glm` function of the `rstanarm` package was used to fit the logistic regression model to predict 2024 presidential vote choice based on state, whether Biden or Trump won that state in 2020, sex, age bracket, race, and highest level of education completed. Although @survey advised against sub-setting the 2022 CES Common Content Dataset, this was a necessary step for me. When I tried to fit the model using the original survey data set, it took hours to run and I was not able to post-stratify due to the following error: `Error: vector memory exhausted (limit reached?)`. 10,000 of the more than 50,000 responses were randomly selected using the `sample` function of base R. The visualizations below show the results of the exploratory data analysis conducted on the original survey data set. As seen in @fig-survey_race, @fig-survey_state2020, @fig-surveyeduc, and @fig-electoral-map-survey, the results are similar to the ones shown in @sec-survey. For the reasons outlined above, I am confident that my random subset is representative of the original 2022 CES Common Content Dataset [@survey].
 
 ```{r}
 #| echo: false
@@ -765,6 +814,7 @@ survey_analysis_data |>
   scale_fill_brewer(palette = "Set1") +
   theme(legend.position = "bottom")
 ```
+
 ```{r}
 #| echo: false
 #| warning: false
@@ -787,6 +837,7 @@ survey_analysis_data |>
 
 # code for this graph is from telling stories with data chapter 13
 ```
+
 ```{r}
 #| echo: false
 #| warning: false
@@ -820,10 +871,41 @@ survey_electoral_map %>%
   labs(fill = "Proportion Voting \nfor Biden")
 ```
 
+```{r}
+#| echo: false
+#| warning: false
+#| eval: true
+#| message: false
+#| label: tbl-urbansurvey
+#| tbl-cap: Presidential preferences of survey respondents living in urban, rural, and suburban areas
+
+urban <- survey_analysis_data |> filter(urban == "urban")
+rural <- survey_analysis_data |> filter(urban == "rural")
+suburban <- survey_analysis_data |> filter(urban == "suburban")
+
+biden_urban <- round(mean(urban$vote_biden)*100,2)
+biden_rural <- round(mean(rural$vote_biden)*100,2)
+biden_suburban <- round(mean(suburban$vote_biden)*100,2)
+
+urban_rural2 <- tibble(
+  " " = c("Urban", "Suburban","Rural"),
+  "Biden %" = c(biden_urban, biden_suburban, biden_rural),
+  "Trump %" = c(100-biden_urban, 100-biden_suburban, 100-biden_rural)
+)
+
+# Set row names
+rownames(urban_rural2) <- NULL
+
+# Render the table using kable
+kable(urban_rural2, align = "c") %>%
+  kable_styling(bootstrap_options = "striped", full_width = F) %>%
+    kable_styling(latex_options = "HOLD_position")
+```
 
 # Model details {#sec-model-details}
 
 ## Posterior predictive check
+
 ```{r}
 #| eval: true
 #| echo: false
@@ -846,6 +928,7 @@ posterior_vs_prior(us_election_model) +
 ```
 
 ## Markov Chain Monte Carlo
+
 ```{r}
 #| echo: false
 #| eval: true
@@ -867,6 +950,7 @@ plot(us_election_model, "trace")
 ```
 
 ## Credibility intervals
+
 ```{r}
 #| echo: false
 #| eval: true
@@ -879,11 +963,6 @@ modelplot(us_election_model, conf_level = 0.9) +
   theme(axis.text.y = element_text(size = 5))
 ```
 
-
-
 \newpage
 
-
 # References
-
-
