@@ -593,12 +593,6 @@ kable(biden_popvote, align = "c") %>%
 
 The lower quantile, mean, and upper quantile estimates for the percentage of votes that President Biden will receive in each state based on my MRP analysis are illustrated in @fig-estimatedpropsupport. The blue (states where the mean prediction for Biden is over 50%) or red line (states where the mean prediction for Trump is over 50%) shows the 95% prediction interval for the percentage of votes that Biden will receive. The mean estimates are denoted by the dot in the middle of each line. The 95% prediction interval falls on both sides of the 50% threshold for numerous states. This means that based on the results of my MRP analysis, we can expect to see close races in a number of states that saw close margins between Trump and Biden in 2020 including, but not limited to, Arizona, Iowa, New Hampshire, New Mexico, Georgia, Texas, Indiana, Ohio, Pennsylvania, and Wisconsin [@citeCNN]. There are a number of other states, including South Dakota, Maine, Minnesota, Delaware, Kentucky, and North Carolina that see the 95% prediction interval fall on both sides of the 50% support for Biden threshold.
 
-@fig-estimatedpropsupport2 shows the same estimates as @fig-estimatedpropsupport, in comparison with the percentage of CES 2022 survey respondents who plan to vote for Joe Biden. The estimates based on the survey data are represented by the gray dots. There is some variation between survey and post-stratification estimates, but in most cases, the survey estimates fall within the 95% prediction interval. However, most states had higher support for President Biden in the survey dataset than in the MRP analysis results. This makes sense, because the CES 2022 survey dataset showed stronger support for President Biden (60.3%) than the general U.S. electorate and the exploratory data analysis conducted in @sec-survey showed that respondents living in states carried by Biden in 2020 showed higher levels of support for President Biden than their counterparts in states carried by Trump in 2020 when gender was held constant.
-
-@fig-electoralmappoststrat uses an electoral map to illustrate the same information as @fig-estimatedpropsupport. It shows the mean estimated proportion of votes that President Joe Biden will receive in each state. The electoral college votes of the states that appear blue in @fig-electoralmappoststrat would go to President Biden, and the electoral college votes of the states that appear red would go to President Trump. California, Oregon, Washington, Massachusetts, Connecticut, New York, New Jersey, and Vermont appear very blue on this map; this indicates that my MRP analysis predicted a comfortable margin of victory for Biden in each of these historically Democratic stronghold states [@citeCNN]. On the contrary, Idaho, Nebraska, Idaho, Wyoming, and Oklahoma appear quite red on the map. This indicates that my MRP analysis predicted a comfortable margin of victory for former President Trump in these states.
-
-@tbl-poststrat_results2 shows the estimates for the electoral college based on the lower, mean, and upper estimates for the percentage of votes in each state that Biden will receive shown in @fig-estimatedpropsupport. The lower estimate for Joe Biden shows him losing the electoral college to Donald Trump, 220 to 318. However, the mean and upper estimates each show Joe Biden defeating Donald Trump in the electoral college by a wide margin, at 413 to 125 and 517 to 21, respectively. There is a huge difference between the lower and upper electoral college estimates for Joe Biden because estimates based on the lower and upper quantiles of the 95% prediction interval for support for his re-election campaign in each state often fall on opposite sides of the 50% threshold. One of those states is Texas, which is allotted the second-most electoral college votes, behind California [@citecook]. Wisconsin, Pennsylvania, Indiana, Georgia, Texas, and New Mexico appear very light-colored in @fig-electoralmappoststrat. These states also saw 95% prediction intervals for the percentage of votes that President Biden will receive fall on both sides of the 50% victory threshold. The winner of each of these states would get all of the electoral votes, regardless of the margin. Therefore, based on my MRP analysis, the results of 2024 U.S. presidential election may be defined close races in key battleground states, where a win for either Trump or Biden is within the 95% prediction interval.
-
 ```{r}
 #| echo: false
 #| warning: false
@@ -681,6 +675,8 @@ biden_support_by_state |>
   theme(axis.text.y = element_text(size = 6)) 
 ```
 
+@fig-estimatedpropsupport2 shows the same estimates as @fig-estimatedpropsupport, in comparison with the percentage of CES 2022 survey respondents who plan to vote for Joe Biden. The estimates based on the survey data are represented by the gray dots. There is some variation between survey and post-stratification estimates, but in most cases, the survey estimates fall within the 95% prediction interval. However, most states had higher support for President Biden in the survey dataset than in the MRP analysis results. This makes sense, because the CES 2022 survey dataset showed stronger support for President Biden (60.3%) than the general U.S. electorate and the exploratory data analysis conducted in @sec-survey showed that respondents living in states carried by Biden in 2020 showed higher levels of support for President Biden than their counterparts in states carried by Trump in 2020 when gender was held constant.
+
 ```{r}
 #| echo: false
 #| warning: false
@@ -714,6 +710,10 @@ biden_support_by_state |>
   coord_flip() +
   theme(axis.text.y = element_text(size = 5)) 
 ```
+
+@fig-electoralmappoststrat uses an electoral map to illustrate the same information as @fig-estimatedpropsupport. It shows the mean estimated proportion of votes that President Joe Biden will receive in each state. The electoral college votes of the states that appear blue in @fig-electoralmappoststrat would go to President Biden, and the electoral college votes of the states that appear red would go to President Trump. California, Oregon, Washington, Massachusetts, Connecticut, New York, New Jersey, and Vermont appear very blue on this map; this indicates that my MRP analysis predicted a comfortable margin of victory for Biden in each of these historically Democratic stronghold states [@citeCNN]. On the contrary, Idaho, Nebraska, Idaho, Wyoming, and Oklahoma appear quite red on the map. This indicates that my MRP analysis predicted a comfortable margin of victory for former President Trump in these states.
+
+@tbl-poststrat_results2 shows the estimates for the electoral college based on the lower, mean, and upper estimates for the percentage of votes in each state that Biden will receive shown in @fig-estimatedpropsupport. The lower estimate for Joe Biden shows him losing the electoral college to Donald Trump, 220 to 318. However, the mean and upper estimates each show Joe Biden defeating Donald Trump in the electoral college by a wide margin, at 413 to 125 and 517 to 21, respectively. There is a huge difference between the lower and upper electoral college estimates for Joe Biden because estimates based on the lower and upper quantiles of the 95% prediction interval for support for his re-election campaign in each state often fall on opposite sides of the 50% threshold. One of those states is Texas, which is allotted the second-most electoral college votes, behind California [@citecook]. Wisconsin, Pennsylvania, Indiana, Georgia, Texas, and New Mexico appear very light-colored in @fig-electoralmappoststrat. These states also saw 95% prediction intervals for the percentage of votes that President Biden will receive fall on both sides of the 50% victory threshold. The winner of each of these states would get all of the electoral votes, regardless of the margin. Therefore, based on my MRP analysis, the results of 2024 U.S. presidential election may be defined close races in key battleground states, where a win for either Trump or Biden is within the 95% prediction interval.
 
 ```{r}
 #| echo: false
@@ -938,50 +938,70 @@ kable(urban_rural2, align = "c") %>%
 
 ## Posterior predictive check
 
+@fig-posterior1 shows the posterior predictive check and @fig-posterior2 shows the comparison of the posterior with the prior [@tswd].
+
 ```{r}
 #| eval: true
 #| echo: false
 #| message: false
 #| warning: false
-#| label: fig-posterior
-#| layout-ncol: 1
-#| fig-cap: "Examining how the model fits, and is affected by, the data"
-#| fig-subcap: ["Posterior prediction check", "Comparing the posterior with the prior"]
+#| label: fig-posterior1
+#| fig-cap: "Posterior prediction check"
 
 pp_check(us_election_model) +
   theme_classic() +
   theme(legend.position = "bottom")
+```
+
+```{r}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| label: fig-posterior2
+#| fig-cap: "Comparing the posterior with the prior"
 
 posterior_vs_prior(us_election_model) +
   theme_minimal() +
   scale_color_brewer(palette = "Set1") +
   theme(legend.position = "bottom") +
   coord_flip()
+
 ```
 
 ## Markov Chain Monte Carlo
+
+I used an Rhat plot and a trace plot to check for signs that the Markov Chain Monte Carlo (MCMC) may have ran into any issues [@tswd]. As seen in @fig-rhat, everything is very close to 1 and below 1.05. This means that all the coefficients converge to the same distribution and the logistic regression model defined in @sec-model can predict `vote_biden` [@tswd].
+
+@fig-trace shows the trace plots for each value for the predictors of `vote_biden`. If the lines are bouncy, horizontal, and overlapping, then the distribution behaves the way we expected it to and there is no need to re-run the model [@tswd].
 
 ```{r}
 #| echo: false
 #| eval: true
 #| message: false
 #| warning: false
-#| label: fig-mcmc
-#| fig-cap: "Checking the convergence of the Markov Chain Monte Carlo (MCMC) algorithm"
-#| fig-subcap: ["Rhat plot", "Trace plot"]
-#| layout-ncol: 1
+#| label: fig-rhat
+#| fig-cap: "Checking the convergence of the Markov Chain Monte Carlo (MCMC) algorithm: Rhat"
 
 plot(us_election_model, "rhat") + 
   theme_classic() +
   theme(axis.text.y = element_text(size = 5))
-  
 
-cat("\n")
+```
 
+```{r}
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| label: fig-trace
+#| fig-cap: "Checking the convergence of the Markov Chain Monte Carlo (MCMC) algorithm: Trace plot"
 plot(us_election_model, "trace") 
 ```
 
 ## Credibility intervals
+
+@fig-modelplot shows the 90% credibility intervals for the predictors of `vote_biden`. This visualization was produced using code provided by @tswd.
 
 ```{r}
 #| echo: false
@@ -990,6 +1010,8 @@ plot(us_election_model, "trace")
 #| warning: false
 #| label: fig-modelplot
 #| fig-cap: "90% Credibility intervals for the predictors of vote_biden"
+
+# plot produced using code from telling stories with data chapter 14
 modelplot(us_election_model, conf_level = 0.9) +
   labs(x = "90% credibility interval") +
   theme(axis.text.y = element_text(size = 5))
