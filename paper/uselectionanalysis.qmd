@@ -454,6 +454,8 @@ voters_by_state |> ggplot(aes(as.factor(level), pct, group=as.factor(type), line
   scale_y_continuous(labels = scales::percent)
 ```
 
+\newpage
+
 # Model {#sec-model}
 
 I performed multi-level regression with post-stratification (MRP) to predict support for president Joe Biden and former president Donald Trump in the 2024 U.S. presidential election. To perform MRP analysis, I fit a logistic regression model on the survey data and applied it to the post-stratification data. Logistic regression is a popular algorithm for binary classification; its goal is to learn how to classify examples (which in this case, are American voters) as Biden or Trump voters based on their features (the state that they live in, whether Biden or Trump won that state in 2020, their sex, age bracket, race, highest level of education, and whether they live in an urban area) \[@citeTensorFlow\]. The logistic regression model uses what it learned from being fit on the survey dataset to classify each respondent in the ACS 2022 (post-stratification) dataset as a a Biden or Trump voter.
@@ -481,9 +483,11 @@ vote\_biden_i|\pi_i &\sim \mbox{Bern}(\pi_i) \\
 ```
 where the binary indicator variable vote\\\_biden\_{i} is equal to 1 if the respondent's preferred 2024 presidential candidate is President Joe Biden (D), or 0 if their preferred candidate is former President Donald Trump (R). My model uses logistic regression, it is not without tradeoffs. Firstly, logistic regression can only be used to predict a binary outcome variable. As far as my model is concerned, the only two vote choices for U.S. adults in the upcoming presidential election are Joe Biden and Donald Trump. The possibility of voting for a third-party candidate is not considered. I discuss the tradeoffs, benefits, weaknesses, and limitations associated with the use of a logistic regression model to forecast the U.S. election in @sec-lr.
 
-## Model justification
+## Model Justification
 
-Logistic regression is a reasonable and appropriate choice for forecasting the U.S. presidential election because there are only two candidates who can win electoral college votes and the White House on November 5, 2024: Joe Biden and Donald Trump. In 2020, third-party candidates received only 1.9% of the national popular vote [@citecook].
+Logistic regression is a reasonable and appropriate choice for forecasting the U.S. presidential election because there are only two candidates who can win electoral college votes and the White House on November 5, 2024: Joe Biden and Donald Trump. In 2020, third-party candidates received only 1.9% of the national popular vote [@citecook]. I expect to see a positive relationship between support for President Biden and living in a state that he won in 2020, female gender, non-white race, college education or higher, and living in an urban or suburban area.
+
+@pew2018 found that across all race groups, a higher percentage of women than men identified with the Democratic Party. @pew2018 also found sizable differences in party affiliation among different races; White voters are more likely to affiliate with or lean toward the Republican Party, while Black, Asian, and Hispanic voters overwhelmingly support the Democratic Party. @pew2021 found that Trump received a higher Hispanic vote share in 2021 than 2016, but Hispanic voters without a college education were substantially more likely to support Trump than Hispanic voters with a college education or higher. Similarly, @pew2018 found that higher levels of education are associated with increased support for and leaning towards the Democratic Party.
 
 ```{r}
 #| echo: false
@@ -741,7 +745,7 @@ Logistic regression was completely appropriate in this case. SoftMax has more pa
 
 ## Next Steps
 
-Python, more recent data set, softmax regression, gradient descent Split the survey data into training, validation, and test Use gradient descent to find the optimal weights to maximize validation accuracy Apply the model to the post-stratification data Softmax regression does risk overfitting
+Python, more recent data set, softmax regression, gradient descent Split the survey data into training, validation, and test datasets. Use gradient descent to find the optimal weights to minimize loss and maximize validation accuracy Apply the model to the post-stratification data Softmax regression does risk overfitting
 
 \newpage
 
