@@ -1,5 +1,6 @@
 #### Preamble ####
-# Purpose: Download and clean the Cooperative Election Study 2022 Data from 
+# Purpose: Download and clean the Cooperative Election Study (CES) 
+# Common Content 2022 Data from Harvard Dataverse 
 # Harvard Dataverse
 # Author: Talia Fabregas
 # Date: 10 April 2024
