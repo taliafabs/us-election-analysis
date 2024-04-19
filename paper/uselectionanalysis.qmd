@@ -6,7 +6,7 @@ author:
 thanks: "Code and data are available at: https://github.com/taliafabs/us-election-analysis.git"
 date: today
 date-format: long
-abstract: "First sentence. Second sentence. Third sentence. Fourth sentence."
+abstract: "The 2024 U.S. Presidential Election will take place on November 5. Voters will once again choose between President Joe Biden and former President Donald Trump. In this report, I used multi-level regression with post-stratification (MRP) to estimate the results of the upcoming presidential election. I fit a logistic regression model on the survey data and applied to the post-stratification data. Using the results of my MRP analysis, I can predict that President Joe Biden will win 55.47% of the popular vote and defeat former President Trump in the electoral college 413 to 125. The electoral college prediction has a large error range close margins in several key battleground states were predicted based on the MRP analysis."
 format: pdf
 number-sections: true
 bibliography: references.bib
@@ -59,7 +59,7 @@ I used R programming language [@citeR] and the `tidyverse` [@citetidyverse], `ja
 
 My survey data comes from the 2022 Comprehensive Election Study (CES), provided by Harvard Dataverse. Sixty research teams participated in the 2022 CES. It is part of the ongoing Cooperative Election Study (CES), which has been conducted every year since 2006 to study elections in the United States using large-scale survey datasets [@survey]. @survey explain that the CES aims to build off of the work of the 2005 Massachusetts Institute of Technology Public Opinion Research and Training Lab (PORTL) study. The CES was known as the Cooperative Congressional Election Study (CCES) before 2020 [@survey].
 
-## Survey Data {#sec-survey}
+## Survey data {#sec-survey}
 
 I selected a random subset of the final release of the 2022 CES Common Content Dataset as my survey data. The 2022 CES Common Content Dataset is a nationally representative sample of 60,000 American adults and it includes sample identifiers such as state and congressional district, demographic profile questions, pre-election questions, post-election questions, and questions about candidate and party preferences [@survey]. Most survey respondents are registered with the YouGov panel to receive notifications about surveys and are rewarded with points that can be exchanged for gift cards, however some come from other survey platforms and online ads [@survey]. As outlined by @survey, not all responses are included in the 2022 CES Common Content Dataset to ensure that it is as representative as possible. I use a random subset of 10,000 of the 60,000 respondents. I explain my sub-setting process and why my random subset is representative of the 2022 CES Common Content Dataset in @sec-data-cleaning-details.
 
@@ -291,7 +291,7 @@ kable(biden_survey, align = "c") %>%
   kable_styling(bootstrap_options = "striped", full_width = F)
 ```
 
-## Poststratification Data {#sec-poststrat}
+## Post-stratification data {#sec-poststrat}
 
 The post-stratification data that I used is a subset of the 2022 American Community Survey (ACS) from IPUMS [@citeIPUMS]. It includes 500,000 census respondents and was downloaded from the IPUMS online database. I selected variables that match the ones in my survey dataset so that my model could easily be applied to my post-stratification data. The variables that I selected include:
 
@@ -475,7 +475,7 @@ vote\_biden_i|\pi_i &\sim \mbox{Bern}(\pi_i) \\
 \beta_8 &\sim \mbox{Normal}(0, 2.5) \\
 \end{align*}
 ```
-where the binary indicator variable vote_biden\_{i} is equal to 1 if the respondent's preferred 2024 presidential candidate is President Joe Biden (D) , or 0 if their preferred candidate is former President Donald Trump (R). My model uses logistic regression, it is not without tradeoffs. Firstly, logistic regression can only be used to predict a binary outcome variable. As far as my model is concerned, the only two vote choices for U.S. adults in the upcoming presidential election are Joe Biden and Donald Trump. The possibilities of voting third-party or not voting at all are not considered. I discuss the tradeoffs, benefits, weaknesses, and limitations associated with the use of a logistic regression model to forecast the U.S. election in more depth in @sec-lr.
+where the binary indicator variable vote_biden\_{i} is equal to 1 if the respondent's preferred 2024 presidential candidate is President Joe Biden (D), or 0 if their preferred candidate is former President Donald Trump (R). My model uses logistic regression, it is not without tradeoffs. Firstly, logistic regression can only be used to predict a binary outcome variable. As far as my model is concerned, the only two vote choices for U.S. adults in the upcoming presidential election are Joe Biden and Donald Trump. The possibilities of voting third-party or not voting at all are not considered. I discuss the tradeoffs, benefits, weaknesses, and limitations associated with the use of a logistic regression model to forecast the U.S. election in more depth in @sec-lr.
 
 ## Model justification
 
@@ -499,7 +499,9 @@ us_election_model <-
 
 ## Popular Vote Prediction
 
-I got my popular vote prediction by applying the model outlined in @sec-model1 to my post-stratification data set to predict the 2024 preferred presidential candidate of each ACS 2022 respondent [@citeIPUMS]. I estimated the upper, lower, and mean quantile of the proportion of voters in each state supporting President Biden. The lower quantile, mean, and upper quantile@tbl-poststrat_results1
+I got my popular vote prediction by applying the model outlined in @sec-model1 to my post-stratification data set to predict the 2024 preferred presidential candidate of each ACS 2022 respondent [@citeIPUMS]. I created a data frame that I obtained my national popular vote prediction by taking the weighted mean of `vote_biden` across
+
+I estimated the upper, lower, and mean quantile of the proportion of voters in each state supporting President Biden. The lower quantile, mean, and upper quantile estimates of the national support for President Biden, which correspond to the upper quantile, mean, and lower quantile estimates of national support for former President Trump are summarized in @tbl-poststrat_results1.
 
 ```{r}
 #| echo: false
@@ -566,6 +568,8 @@ kable(biden_popvote, align = "c") %>%
 ```
 
 ## Electoral College Prediction
+
+The lower quantile, mean, and upper quantile estimates for the percentage of votes that President Biden will receive in each state based on my MRP analysis are illustrated in @fig-estimatedpropsupport. The blue (states where the mean prediction for Biden is over 50%) or red line (states where the mean prediction for Trump is over 50%) shows the 95% prediction interval for the percentage of votes that Biden will receive. The mean estimates are denoted by the dot in the middle of each line. The 95% prediction interval falls on both sides of the 50% threshold for numerous states ...
 
 ```{r}
 #| echo: false
@@ -712,7 +716,7 @@ poststrat_electoral_map %>%
 
 # Discussion {#sec-discussion}
 
-## Popular Vote Prediction {#sec-first-point}
+## Predicting the Popular Vote with Logistic Regression {#sec-first-point}
 
 ## Swing States had Close Margins and Large Error Ranges
 
