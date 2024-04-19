@@ -102,7 +102,7 @@ survey_analysis_subset |>
 # code for this graph was obtained from telling stories with data chapter 13
 ```
 
-The education gap in vote preference has widened since 2016 [@pew2021].
+The education gap in vote preference and party identification has widened since 2016 [@pew2021]. The differences that I see in vote preference between male and female survey respondents is consistent with this. @fig-subseteduc shows the differences in vote preference for male and female survey respondents by highest level of education. Overall, female respondents were more likely to support President Biden than their male counterparts with the same level of education. Male voters who did not graduate from high school or whose highest level of education is high school favored former President Trump. As highest level of education increased, so did male voters' support for President Biden. Among all male voters, those with a 4-year college degree or a post-graduate degree showed the most support for President Biden. On the contrary, female voters with a high school education or less slightly favored President Biden, while female voters with a 4-year college or post-graduate degree heavily favored President Biden.
 
 ```{r}
 #| echo: false
@@ -127,6 +127,8 @@ survey_analysis_subset |>
   theme(legend.position = "bottom")
 # code for this graph was obtained from telling stories with data chapter 13
 ```
+
+@citeScala found that even when social, demographic, and economic factors such as sex, age, race, and highest level of education were held constant, the urban-rural divide remained statistically significant for estimating vote patterns in American presidential elections. Furthermore, @citeParker found that urban voters strongly favored President Biden, suburban voters were split, but slightly favored president Biden, and rural voters favored President Trump. Although the CES Common Content Dataset has strong overall support for Biden (60.34% of all respondents), the pattern that @citeParker found still holds. As shown in @tbl-urbansubset, voters in urban areas heavily favored President Biden, the gap was narrower for suburban voters, and rural voters favored former President Trump. @fig-subset-urban_rural shows how female and male respondents' for Biden and Trump varied between urban, suburban, and rural voters. Female respondents living in rural areas favored former President Trump, while female respondents in suburban and urban areas favored President Biden. The pattern that @citeParker found is stronger among male survey respondents. Male respondents in urban areas favored President Biden, the gap narrowed in suburban areas, and male voters in rural areas favored former President Trump.
 
 ```{r}
 #| echo: false
@@ -181,8 +183,7 @@ rownames(urban_rural) <- NULL
 
 # Render the table using kable
 kable(urban_rural, align = "c") %>%
-  kable_styling(bootstrap_options = "striped", full_width = F) %>%
-    kable_styling(latex_options = "HOLD_position")
+  kable_styling(bootstrap_options = "striped", full_width = F) 
 ```
 
 ```{r}
@@ -240,7 +241,7 @@ survey_electoral_map %>%
   labs(fill = "Proportion Voting \nfor Biden")
 ```
 
-@fig-electoral-map-survey-subset illustrates the proportion of subset survey respondents in each state who plan to support President Biden in the 2024 election. My subset survey dataset appears to show stronger support for President Joe Biden than the general U.S. electorate both overall and at the state level. As shown in @sec-survey-details, this is not unique to the subset data; the complete 2022 CES Common Content Dataset shows strong support for President Biden and the Democratic Party based on 2016 vote choice (`presvote16post`), 2020 vote choice (`presvote20post`), and party identification (`pid3`). However, as seen in subset-state2020_subset, respondents who live in states won by Biden in 2020 (blue states) were more likely to support him over Trump in 2024 than those who live in states won by former president Trump in 2020 (red states). To account for this difference, and the fact that the survey dataset I used has strong support for President Biden, I created the `biden_won` variable, which is equal to 1 if a state was carried by President Biden in 2020 and 0 if it was carried by former President Trump in 2020. The data cleaning steps that I used to create the `biden_won` variable are outlined in @sec-data-cleaning-details.
+@fig-electoral-map-survey-subset illustrates the proportion of subset survey respondents in each state who plan to support President Biden in the 2024 election. My subset survey dataset appears to show stronger support for President Joe Biden than the general U.S. electorate both overall and at the state level. As shown in @sec-survey-details, this is not unique to the subset data; the complete 2022 CES Common Content Dataset shows strong support for President Biden and the Democratic Party based on 2016 vote choice (`presvote16post`), 2020 vote choice (`presvote20post`), and party identification (`pid3`). 60.34% of survey respondents support BIden, while 39.66% support Trump. However, as seen in @fig-subset-state2020_subset, respondents who live in states won by Biden in 2020 (blue states) were more likely to support him over Trump in 2024 than those who live in states won by former president Trump in 2020 (red states). To account for this difference, and the fact that the survey dataset I used has strong support for President Biden, I created the `biden_won` variable, which is equal to 1 if a state was carried by President Biden in 2020 and 0 if it was carried by former President Trump in 2020. The data cleaning steps that I used to create the `biden_won` variable are outlined in @sec-data-cleaning-details. @tbl-subset_results summarizes the popular vote and electoral college predictions based solely on my survey data.
 
 ```{r}
 #| echo: false
@@ -494,7 +495,7 @@ vote\_biden_i|\pi_i &\sim \mbox{Bern}(\pi_i) \\
 \beta_8 &\sim \mbox{Normal}(0, 2.5) \\
 \end{align*}
 ```
-where the binary indicator variable vote_biden\_{i} is equal to 1 if the respondent's preferred 2024 presidential candidate is President Joe Biden (D), or 0 if their preferred candidate is former President Donald Trump (R). My model uses logistic regression, it is not without tradeoffs. Firstly, logistic regression can only be used to predict a binary outcome variable. As far as my model is concerned, the only two vote choices for U.S. adults in the upcoming presidential election are Joe Biden and Donald Trump. The possibility of voting for a third-party candidate is not considered. I discuss the tradeoffs, benefits, weaknesses, and limitations associated with the use of a logistic regression model to forecast the U.S. election in @sec-lr.
+where the binary indicator variable `vote_biden` is equal to 1 if the respondent's preferred 2024 presidential candidate is President Joe Biden (D), or 0 if their preferred candidate is former President Donald Trump (R). My model uses logistic regression, it is not without tradeoffs. Firstly, logistic regression can only be used to predict a binary outcome variable. As far as my model is concerned, the only two vote choices for U.S. adults in the upcoming presidential election are Joe Biden and Donald Trump. The possibility of voting for a third-party candidate is not considered. I discuss the tradeoffs, benefits, weaknesses, and limitations associated with the use of a logistic regression model to forecast the U.S. election in @sec-lr.
 
 ## Model Justification
 
@@ -744,22 +745,26 @@ poststrat_electoral_map %>%
 
 # Discussion {#sec-discussion}
 
-## Predicting the Popular Vote with Logistic Regression {#sec-first-point}
+## Questions Raised by the use of Logistic Regression and the Resulting Electoral College Prediction {#sec-d1}
 
-## Questions Raised by the Electoral College Prediction
+Based on my MRP analysis, I predicted that Joe Biden and Donald Trump would win 55.47% and 44.53% of the popular vote, respectively. As noted in @sec-results, these percentages sum to 100% because the only candidates that my logistic regression model considers are Biden and Trump. In the 2020 U.S. election, Joe Biden and Donald Trump received 51.3% and 46.9% of the popular vote, respectively [@citeCNN]. Unlike the results of my MRP analysis, these predictions do not sum to 100%; third-party candidates received 1.8% of the national popular vote. While this percentage seems small, it is not evenly distributed across all states, and in some swing states, the third-party vote share was larger than Biden or Trump's margin of victory. Based on my MRP analysis, several battleground states including (but not limited to) Georgia, Pennsylvania, Wisconsin, and Arizona had 95% prediction intervals for support for President Biden fall on both sides of the 50% threshold. Some of these states saw a larger third-party vote share than margin of victory for President Biden in the 2020 election. In the 2020 presidential election, Georgia was decided by 0.3 percentage points, with President Biden receiving 49.5% of the vote, President Trump receiving 49.2%, and third-party candidates receiving 1.3% [@citeCNN]. Similarly, President Biden received 49.4%, former President Trump received 49.0%, and third-party candidates received 1.6% of the vote in Arizona [@citeCNN]. Logistic regression does not account for this. In general, that is a small tradeoff and using logistic regression is reasonable and appropriate because the only two candidates who can win any electoral college votes and the White House are the Democratic and Republican nominees. The limitations of logistic regression can accumulate and seriously threaten the accuracy of an electoral college prediction. Not accounting for third-party candidates can be the difference between correctly and incorrectly predicting the results in swing states that have seen larger third-party vote shares than margins of victory in recent elections. Inaccurately predicting battleground states with tight margins will lead to an inaccurate electoral college and election forecast. In @sec-lr, I discuss the case for (and against) the use of SoftMax regression in U.S. election forecasting. 
 
-Swing states and error ranges in the MRP analysis electoral college prediction
 
 ## Weaknesses and Limitations of the Survey Dataset
 
-## The Limitations of Logistic Regression and the Case for (and against) SoftMax Regression {#sec-lr}
+The survey dataset that I selected, the CES 2022 Common Content Dataset, has an excellent sample of 60,000 respondents and it includes questions about race, sex, age, state, type of area, partisan affiliation, and recent presidential vote choices. However, it is not without weaknesses and limitations. Firstly, it does not contain a question about preferred 2024 presidential candidate. I had to construct the `vote_biden` variable myself, and that process is outlined in @sec-data-cleaning-details. Secondly, it is almost two years old and its intended use is for studying the 2022 midterm elections, not forecasting the 2024 presidential election. 
 
-Logistic regression was completely appropriate in this case. SoftMax has more parameters and is more complex; this means that a SoftMax regression model is more likely to overfit.
+Another concern that I have about my survey dataset is bias in the `vote_biden` variable. 60.34% of survey respondents are labeled as Biden voters (`vote_biden = 1`), compared to 39.66% of survey respondents labeled as Trump voters (`vote_biden = 0`). The popular vote prediction that I have for President Biden based solely on my survey dataset, at 60.34%, is siginificantly higher than the popular vote shares that Presidents Clinton, Bush, Obama, and Trump ever received [@citeRoper]. The last U.S. president to win over 60% of the national popular vote was Richard Nixon in 1972 [@citeRoper]. This means that there is likely higher support for President Biden in my survey dataset than in the general U.S. electorate. I constructed the `biden_won` variable to try to account for this, but at the end of the day, biased survey data can lead to biased MRP results. My logistic regression model used the survey data to learn how to classify respondents based on state, whether Biden won that state, age, sex, race, education, and the type of area that they live in. If there was bias present in my survey dataset, my model would have learned it and produced biased results.
+
+
+## The Case for (and against) SoftMax Regression {#sec-lr}
+
+As outlined in @sec-d1, the use of logistic regression in U.S. election forecasting is justified and reasonable, but not without limitations. SoftMax regression has the potential to solve the issues presented in @sec-d1; it is a generalization of logistic regression that can perform multi-class classification for K classes instead of binary classification for just two. At first, this sounds great. Considering third-party candidates sounds like a perfect solution to the issue that my current logistic regression model seems to have when predicting swing states such as Georgia, Arizona, and Pennsylvania. However, SoftMax regression should be used with caution. It is far more complex than logistic regression and it includes more parameters. This means that it may severely overfit my survey dataset, which contains 10,000 observations. A model overfits when it is simply too complex and powerful to perform the intended task, so it picks up noise (outliers) in the data and uses those to make predictions. An overfit model will not perform well on the unseen post-stratification data. Given my current dataset, logistic regression remains the appropriate choice despite its inability to consider third-party voters and what this might mean for swing state predictions.
+
 
 ## Next Steps
 
-Python, more recent data set, softmax regression, gradient descent Split the survey data into training, validation, and test datasets. Use gradient descent to find the optimal weights to minimize loss and maximize validation accuracy Apply the model to the post-stratification data Softmax regression does risk overfitting
-
+I intend to extend this study with a more recent and larger survey dataset in the future. My first step towards extending and improving this study would be finding a dataset that includes a question about preferred 2024 presidential candidate and is large enough to train, validate, and test a SoftMax regression model. I would use Python instead of R to conduct further analysis. I would then split my new dataset into training, validation, and test sets and teach a SoftMax regression model to classify voters as Biden, Trump, or third-party voters using the training data. I would then use the validation set to apply regularization to prevent overfitting and tune the learning rate to maximize validation accuracy. My goal would be to maximize validation accuracy because it is an indicator of how well the model will be able to classify unseen post-stratification dataset respondents. After it has been trained, tuned, and tested, I will apply the SoftMax regression model to the post-stratification dataset and use the results to once again predict the 2024 U.S. election electoral college and popular vote results, with third-party candidates taken into account.
 \newpage
 
 \appendix
