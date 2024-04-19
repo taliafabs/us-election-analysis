@@ -19,8 +19,6 @@ library(arrow)
 
 sim_size <- 500000
 
-presidential_candidates <- c("Joe Biden", "Donald Trump")
-
 states <- c(
   "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", 
   "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", 
@@ -55,7 +53,6 @@ area <- c("urban", "suburban", "rural")
 states <- tolower(states)
 
 simulated_poststrat_data <- tibble(
-
   # state
   state = sample(states, size=sim_size, replace=TRUE),
   # age
